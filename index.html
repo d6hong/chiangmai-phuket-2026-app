@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🇹🇭 2026 清邁 & 布吉 摩托之旅</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+body {
+font-family: 'Noto Sans TC', system-ui, sans-serif;
+background: linear-gradient(to bottom, #f0fdf4, #ecfdf5); /* 手機框框外面乾淨淺綠漸層 */
+}
+
+.phone-frame {
+max-width: 420px;
+margin: 0 auto;
+border: 12px solid #111827;
+border-radius: 48px;
+box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+overflow: hidden;
+background: #fff;
+height: 100vh;
+display: flex;
+flex-direction: column;
+/* 背景圖片只顯示喺 phone frame 入面 */
+background-image:
+linear-gradient(rgba(134, 239, 172, 0.45), rgba(16, 185, 129, 0.55)),
+url('https://images.trvl-media.com/place/6056197/b646a464-945b-490a-9454-434f1e1223cc.jpg');
+background-size: cover;
+background-position: center;
+}
+
+.app-header {
+background: linear-gradient(90deg, #86efac, #10b981);
+}
+
+.trip-card {
+transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.trip-card:hover {
+transform: translateY(-4px);
+box-shadow: 0 20px 25px -5px rgb(16 185 129 / 0.2);
+}
+
+.day-header {
+background: linear-gradient(135deg, #86efac, #15803d);
+}
+
+.nav-item {
+transition: all 0.2s;
+}
+
+.modal {
+animation: modalPop 0.3s ease;
+}
+
+@keyframes modalPop {
+0% { opacity: 0; transform: scale(0.95); }
+100% { opacity: 1; transform: scale(1); }
+}
+
+.expense-item {
+transition: all 0.2s;
+}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center py-8">
+<div id="app" class="phone-frame">
+
+<!-- 頂部標頭（已改文字） -->
+<div class="app-header px-6 py-5 text-white flex items-center justify-between shadow-md">
+<div class="flex items-center gap-3">
+<span class="text-4xl">🇹🇭</span>
+<div>
+<h1 class="text-2xl font-bold tracking-tight">2026 清邁 & 布吉</h1>
+<p class="text-sm opacity-90 flex items-center gap-1">
+🇹🇭 10 - 24 May 🏍️
+</p>
+</div>
+</div>
+
+<!-- 右上角即時匯率 -->
+<div class="flex flex-col items-end">
+<div class="text-xs bg-white/20 px-4 py-1 rounded-3xl flex items-center gap-1 shadow-inner">
+<span class="font-medium">1 HKD ≈</span>
+<span class="font-bold">{{ rates.THB ? rates.THB.toFixed(2) : '—' }} ฿</span>
+</div>
+<div class="text-[10px] mt-1 opacity-75">HKG → CNX → HKT</div>
+</div>
+</div>
+
+<!-- 主要內容 -->
+<div class="flex-1 overflow-auto">
+
+<!-- 行程表 Tab -->
+<div v-if="currentTab === 'itinerary'" class="p-5 space-y-6">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-2xl font-semibold text-emerald-800 flex items-center gap-2">
+<i class="fas fa-calendar-alt"></i> 行程表
+</h2>
+<span class="text-sm text-emerald-600 bg-emerald-100 px-4 py-1 rounded-3xl">14日清邁布吉旅行</span>
+</div>
+
+<!-- 每日獨立卡片（已修正排版） -->
+<div v-for="day in days" :key="day.date" class="trip-card bg-white rounded-3xl shadow-xl overflow-hidden">
+<div class="day-header px-6 py-5 text-white flex items-center gap-4 cursor-pointer" @click="toggleDay(day.date)">
+<span class="text-4xl">📅</span>
+<div class="flex-1">
+<div class="font-bold text-xl">{{ day.displayDate }}</div>
+<div class="text-emerald-100 text-sm">{{ day.title }}</div>
+</div>
+<i :class="expandedDays[day.date] ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="text-2xl"></i>
+</div>
+
+<!-- 表格正確顯示喺日期下面 -->
+<div v-if="expandedDays[day.date]" class="p-6 bg-white">
+<table class="w-full text-sm text-emerald-800">
+<thead>
+<tr class="border-b border-emerald-100">
+<th class="text-left py-3 font-medium w-24">時間</th>
+<th class="text-left py-3 font-medium">活動</th>
+<th class="text-center py-3 font-medium w-20">騎行</th>
+<th class="text-left py-3 font-medium">備註</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-emerald-100">
+<tr v-for="(act, i) in day.activities" :key="i">
+<td class="py-4 text-emerald-600 font-medium">{{ act.time }}</td>
+<td class="py-4">{{ act.activity }}</td>
+<td class="py-4 text-center text-xs font-medium">{{ act.ride }}</td>
+<td class="py-4 text-xs text-emerald-500">{{ act.note }}</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<!-- 記帳 Tab -->
+<div v-else-if="currentTab === 'accounting'" class="p-5 space-y-6">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-2xl font-semibold text-emerald-800 flex items-center gap-2">
+<i class="fas fa-receipt"></i> 旅費管理
+</h2>
+<button @click="showAddModal = true"
+class="bg-emerald-500 text-white px-5 py-2 rounded-3xl flex items-center gap-2 text-sm font-medium shadow-lg active:scale-95">
+<i class="fas fa-plus"></i> 新增支出
+</button>
+</div>
+
+<!-- 總支出大卡片 -->
+<div class="bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-3xl p-8 shadow-inner text-center">
+<div class="text-emerald-600 text-sm mb-1">總支出</div>
+<div class="text-5xl font-bold text-emerald-800 mb-1">{{ totalHKD.toLocaleString() }} HKD</div>
+<div class="text-emerald-700 text-xl font-medium flex items-center justify-center gap-2">
+<span>≈</span>
+<span>{{ totalTHB.toLocaleString() }} ฿</span>
+</div>
+<div class="text-[10px] text-emerald-500 mt-3">1 HKD ≈ {{ rates.THB ? rates.THB.toFixed(2) : '—' }} ฿</div>
+</div>
+
+<!-- 支出列表 -->
+<div v-for="expense in expenses" :key="expense.id"
+class="expense-item bg-white rounded-3xl p-5 flex justify-between items-center shadow-sm">
+<div class="flex-1">
+<div class="font-medium">{{ expense.description }}</div>
+<div class="text-xs text-gray-500 flex items-center gap-3 mt-1">
+<span>{{ expense.date }}</span>
+<span class="px-3 py-0.5 bg-emerald-100 text-emerald-700 rounded-2xl text-[10px]">{{ expense.category }}</span>
+<span class="text-emerald-600">{{ expense.paymentMethod }}</span>
+</div>
+</div>
+<div class="text-right">
+<div class="font-bold text-xl text-emerald-800">{{ expense.amount }} ฿</div>
+<div class="text-xs text-emerald-500">≈ {{ Math.round(expense.amount / rates.THB) }} HKD</div>
+</div>
+<button @click="deleteExpense(expense.id)" class="ml-4 text-red-400 hover:text-red-500">
+<i class="fas fa-trash"></i>
+</button>
+</div>
+
+<div v-if="expenses.length === 0" class="text-center py-12 text-emerald-400">
+<i class="fas fa-receipt text-6xl mb-4 opacity-30"></i>
+<p>仲未有任何支出～</p>
+<p class="text-sm">快啲新增第一筆啦！</p>
+</div>
+</div>
+
+<!-- 匯率 Tab -->
+<div v-else-if="currentTab === 'rates'" class="p-5">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-2xl font-semibold text-emerald-800 flex items-center gap-2">
+<i class="fas fa-chart-line"></i> 實時匯率
+</h2>
+<button @click="fetchRates"
+class="flex items-center gap-2 text-sm bg-white shadow px-4 py-2 rounded-3xl text-emerald-600">
+<i class="fas fa-sync"></i> 刷新
+</button>
+</div>
+
+<div class="bg-white rounded-3xl p-8 shadow-xl mb-8">
+<div class="flex items-center justify-between">
+<div>
+<div class="flex items-center gap-3">
+<span class="text-4xl">🇭🇰</span>
+<div>
+<div class="font-bold text-2xl">1 HKD</div>
+<div class="text-emerald-500 text-sm">香港元</div>
+</div>
+</div>
+</div>
+<div class="text-center">
+<i class="fas fa-arrow-right text-3xl text-emerald-400"></i>
+</div>
+<div class="text-right">
+<div class="flex items-center gap-3 justify-end">
+<div>
+<div class="font-bold text-2xl">{{ rates.THB ? rates.THB.toFixed(2) : '—' }} ฿</div>
+<div class="text-emerald-500 text-sm">泰銖</div>
+</div>
+<span class="text-4xl">🇹🇭</span>
+</div>
+</div>
+</div>
+
+<div class="mt-8 pt-8 border-t text-center text-xs text-emerald-400">
+最後更新：{{ lastUpdated }}<br>
+1 THB ≈ {{ (1 / rates.THB).toFixed(3) }} HKD
+</div>
+</div>
+
+<div class="bg-white rounded-3xl p-6">
+<p class="text-emerald-700 font-medium mb-4">快速換算</p>
+<div class="flex gap-4">
+<div class="flex-1">
+<label class="block text-xs text-emerald-500 mb-1">HKD</label>
+<input v-model="convertHKD" type="number" class="w-full bg-emerald-50 border border-transparent focus:border-emerald-400 rounded-3xl px-5 py-4 text-2xl outline-none">
+</div>
+<div class="flex items-end pb-4 text-emerald-400">→</div>
+<div class="flex-1">
+<label class="block text-xs text-emerald-500 mb-1">THB ฿</label>
+<input :value="(convertHKD * rates.THB).toFixed(0)" readonly class="w-full bg-emerald-50 border border-transparent focus:border-emerald-400 rounded-3xl px-5 py-4 text-2xl outline-none">
+</div>
+</div>
+</div>
+
+<p class="text-center text-emerald-400 text-xs mt-8">數據來自 exchangerate.host • 免費即時更新</p>
+</div>
+</div>
+
+<!-- 底部導航 -->
+<div class="bg-white border-t border-emerald-100 px-6 py-3 grid grid-cols-3 text-center text-emerald-600 shadow-2xl">
+<button @click="currentTab = 'itinerary'"
+:class="{ 'text-emerald-600 scale-110' : currentTab === 'itinerary' }"
+class="nav-item flex flex-col items-center gap-1">
+<i class="fas fa-calendar-alt text-2xl"></i>
+<span class="text-xs font-medium">行程表</span>
+</button>
+<button @click="currentTab = 'accounting'"
+:class="{ 'text-emerald-600 scale-110' : currentTab === 'accounting' }"
+class="nav-item flex flex-col items-center gap-1">
+<i class="fas fa-receipt text-2xl"></i>
+<span class="text-xs font-medium">旅費</span>
+</button>
+<button @click="currentTab = 'rates'"
+:class="{ 'text-emerald-600 scale-110' : currentTab === 'rates' }"
+class="nav-item flex flex-col items-center gap-1">
+<i class="fas fa-chart-line text-2xl"></i>
+<span class="text-xs font-medium">匯率</span>
+</button>
+</div>
+
+<!-- 新增支出 Modal -->
+<div v-if="showAddModal" class="fixed inset-0 bg-black/60 flex items-end z-50">
+<div class="modal bg-white w-full rounded-t-3xl max-h-[85vh] overflow-auto">
+<div class="px-6 py-5 border-b flex items-center justify-between">
+<h3 class="font-semibold text-xl text-emerald-800">新增一筆支出</h3>
+<button @click="showAddModal = false" class="text-3xl text-emerald-300">×</button>
+</div>
+<div class="p-6 space-y-6">
+<div>
+<label class="block text-emerald-500 text-sm mb-2">日期</label>
+<input v-model="newExpense.date" type="date" class="w-full border border-emerald-200 rounded-3xl px-5 py-4">
+</div>
+<div>
+<label class="block text-emerald-500 text-sm mb-2">項目描述</label>
+<input v-model="newExpense.description" placeholder="例如：Khao Soi 午餐" class="w-full border border-emerald-200 rounded-3xl px-5 py-4">
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-emerald-500 text-sm mb-2">金額 (THB ฿)</label>
+<input v-model.number="newExpense.amount" type="number" placeholder="0" class="w-full border border-emerald-200 rounded-3xl px-5 py-4 text-2xl">
+</div>
+<div>
+<label class="block text-emerald-500 text-sm mb-2">類別</label>
+<select v-model="newExpense.category" class="w-full border border-emerald-200 rounded-3xl px-5 py-4">
+<option value="食物">🍜 食物</option>
+<option value="交通">🏍️ 交通</option>
+<option value="住宿">🏨 住宿</option>
+<option value="娛樂">🎡 娛樂</option>
+<option value="購物">🛍️ 購物</option>
+<option value="SPA/按摩">💆 SPA/按摩</option>
+<option value="其他">其他</option>
+</select>
+</div>
+</div>
+<div>
+<label class="block text-emerald-500 text-sm mb-2">支付方式</label>
+<div class="grid grid-cols-4 gap-3">
+<button @click="newExpense.paymentMethod = '現金'" :class="{ 'ring-2 ring-emerald-400' : newExpense.paymentMethod === '現金' }" class="border border-emerald-200 rounded-3xl py-4 text-sm flex flex-col items-center">💵 現金</button>
+<button @click="newExpense.paymentMethod = '信用卡'" :class="{ 'ring-2 ring-emerald-400' : newExpense.paymentMethod === '信用卡' }" class="border border-emerald-200 rounded-3xl py-4 text-sm flex flex-col items-center">💳 信用卡</button>
+<button @click="newExpense.paymentMethod = 'Alipay'" :class="{ 'ring-2 ring-emerald-400' : newExpense.paymentMethod === 'Alipay' }" class="border border-emerald-200 rounded-3xl py-4 text-sm flex flex-col items-center">📱 Alipay</button>
+<button @click="newExpense.paymentMethod = '其他'" :class="{ 'ring-2 ring-emerald-400' : newExpense.paymentMethod === '其他' }" class="border border-emerald-200 rounded-3xl py-4 text-sm flex flex-col items-center">📲 其他</button>
+</div>
+</div>
+<div>
+<label class="block text-emerald-500 text-sm mb-2">備註 (選填)</label>
+<textarea v-model="newExpense.note" rows="2" class="w-full border border-emerald-200 rounded-3xl px-5 py-4 resize-none"></textarea>
+</div>
+</div>
+<div class="p-5 border-t flex gap-4">
+<button @click="showAddModal = false" class="flex-1 py-4 text-emerald-600 font-medium border border-emerald-200 rounded-3xl">取消</button>
+<button @click="addExpense" class="flex-1 py-4 bg-emerald-500 text-white font-medium rounded-3xl">確定新增</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+const { createApp } = Vue
+
+createApp({
+data() {
+return {
+currentTab: 'itinerary',
+expandedDays: {},
+days: [
+{ date: "2026-05-10", displayDate: "5月10日（星期日）", title: "抵達 + TM30 + 真心市集 + 帕尼帕診所 + 塔佩門夜市 + Relax Express按摩", activities: [{ time: "07:50-09:45", activity: "UO738 HKG→CNX 抵達機場", ride: "Grab/Taxi 20分鐘", note: "取行李" }, { time: "10:00-11:30", activity: "Proud Phu Fah check-in + TM30", ride: "酒店內", note: "前台超快" }, { time: "11:30-12:00", activity: "租 Tawan Bike ADV 160", ride: "10-15分鐘 / 5km", note: "雙頭盔+鎖" }, { time: "13:15-15:00", activity: "真心市集逛手作", ride: "園內短途", note: "3點前主要攤檔" }, { time: "15:00-15:15", activity: "帕尼帕診所 medical", ride: "10分鐘 / 3-5km", note: "同一區" }, { time: "18:00-21:00", activity: "塔佩門週日夜市", ride: "步行", note: "浪漫熱鬧" }, { time: "21:00-22:30", activity: "Relax Express按摩", ride: "10-15分鐘", note: "超舒服" }] },
+{ date: "2026-05-11", displayDate: "5月11日（星期一）", title: "Theory Class Day 1 + 素帖寺夜景", activities: [{ time: "07:00-07:45", activity: "酒店出發去Driving School", ride: "30-45分鐘 / 15-20km", note: "準時8am" }, { time: "08:00-18:00", activity: "Theory Class 全日", ride: "—", note: "跟學校時間" }, { time: "18:15-20:30", activity: "素帖寺夜景 + 觀景台", ride: "30-45分鐘 / 15km", note: "晚上燈光超美" }] },
+{ date: "2026-05-12", displayDate: "5月12日（星期二）", title: "Driving Test Day 2 + Calm Massage and Spa", activities: [{ time: "07:00-16:00", activity: "Driving Test 全日", ride: "—", note: "跟學校時間" }, { time: "16:30-21:00", activity: "古城慶祝 + Night Bazaar", ride: "30-45分鐘", note: "終於考完！" }, { time: "21:00-22:30", activity: "Calm Massage and Spa", ride: "5-10分鐘 / 3km", note: "1.5小時全身按摩" }] },
+{ date: "2026-05-13", displayDate: "5月13日（星期三）", title: "因他農山國家公園（Doi Inthanon）", activities: [{ time: "07:30-10:00", activity: "酒店 → 公園入口", ride: "2.5-3小時 / 100km", note: "早出發" }, { time: "10:00-14:30", activity: "瓦奇拉坦瀑布、皇家雙塔、克美潘自然步道", ride: "園內", note: "雲海森林最靚" }, { time: "16:00-18:30", activity: "下山返酒店", ride: "2-2.5小時 / 100km", note: "避雨" }] },
+{ date: "2026-05-14", displayDate: "5月14日（星期四）", title: "DLT領證 + 班康瓦特藝術村 + 沙孟環線 + 美林溫泉", activities: [{ time: "08:30-10:00", activity: "DLT Maehia 領證", ride: "30-40分鐘 / 15km", note: "🎉 泰國駕照到手" }, { time: "10:30-17:00", activity: "藝術村 + 沙孟環線 + 美林溫泉", ride: "2.5-3小時 / 80km", note: "最浪漫拍照點" }] },
+{ date: "2026-05-15", displayDate: "5月15日（星期五）", title: "Pai Day 1：清邁 → 拜縣 + The Quarter Pai", activities: [{ time: "07:00-11:00", activity: "清邁 → 拜縣", ride: "3.5-4小時 / 130km", note: "762彎超刺激" }, { time: "13:00-18:00", activity: "Pai Canyon + 竹橋 + 夜市", ride: "短途", note: "Walking Street 浪漫" }] },
+{ date: "2026-05-16", displayDate: "5月16日（星期六）", title: "Pai Day 2：拜縣全日探索 + 返清邁", activities: [{ time: "08:00-15:30", activity: "雲來觀景台 + 咖啡園 + 自由騎", ride: "短途30km", note: "慢慢玩" }, { time: "16:00-20:00", activity: "拜縣 → 清邁", ride: "3.5-4小時 / 130km", note: "下午出發避夜路" }] },
+{ date: "2026-05-17", displayDate: "5月17日（星期日）", title: "黏黏瀑布 + 清邁大峽谷 + 雞籠蒸SPA", activities: [{ time: "08:00-12:00", activity: "黏黏瀑布踩水", ride: "1.5-2小時 / 60km", note: "超好玩" }, { time: "13:30-16:00", activity: "清邁大峽谷影相", ride: "短途", note: "夕陽跳水" }, { time: "18:00-20:30", activity: "雞籠蒸SPA", ride: "步行", note: "需預約" }] },
+{ date: "2026-05-18", displayDate: "5月18日（星期一）", title: "美甘朋村 + 歐布汗國家公園", activities: [{ time: "08:00-12:00", activity: "美甘朋村 + 多級瀑布", ride: "1-1.5小時 / 40km", note: "村莊體驗" }, { time: "13:00-17:00", activity: "歐布汗國家公園", ride: "45-60分鐘 / 30km", note: "峽谷影相" }] },
+{ date: "2026-05-19", displayDate: "5月19日（星期二）", title: "清邁最後 + 下午飛布吉", activities: [{ time: "上午", activity: "酒店 check-out + 自由時間", ride: "—", note: "重溫最愛" }, { time: "下午", activity: "PG248 CNX→HKT", ride: "Grab 30分鐘", note: "飛布吉 Niranapa 酒店" }] }
+],
+expenses: [],
+showAddModal: false,
+newExpense: { date: new Date().toISOString().slice(0,10), description: '', amount: 0, category: '食物', paymentMethod: '現金', note: '' },
+rates: { THB: 4.65 },
+lastUpdated: '',
+convertHKD: 100,
+exchangeRate: 4.65
+}
+},
+computed: {
+totalTHB() { return this.expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0) },
+totalHKD() { return Math.round(this.totalTHB / this.exchangeRate) }
+},
+methods: {
+toggleDay(date) { this.expandedDays[date] = !this.expandedDays[date] },
+addExpense() {
+if (!this.newExpense.description || this.newExpense.amount <= 0) return alert('請填寫項目同金額呀～')
+this.expenses.unshift({ id: Date.now(), ...this.newExpense })
+this.saveExpenses()
+this.showAddModal = false
+this.newExpense = { date: new Date().toISOString().slice(0,10), description: '', amount: 0, category: '食物', paymentMethod: '現金', note: '' }
+},
+deleteExpense(id) {
+if (confirm('確定刪除呢筆支出？')) {
+this.expenses = this.expenses.filter(exp => exp.id !== id)
+this.saveExpenses()
+}
+},
+saveExpenses() { localStorage.setItem('chiangmai_expenses', JSON.stringify(this.expenses)) },
+loadExpenses() {
+const saved = localStorage.getItem('chiangmai_expenses')
+if (saved) this.expenses = JSON.parse(saved)
+},
+async fetchRates() {
+try {
+const res = await fetch('https://api.exchangerate.host/latest?base=HKD&symbols=THB')
+const data = await res.json()
+this.rates.THB = data.rates.THB
+this.exchangeRate = data.rates.THB
+this.lastUpdated = new Date().toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' })
+} catch(e) {}
+}
+},
+mounted() {
+this.loadExpenses()
+this.fetchRates()
+this.expandedDays[this.days[0].date] = true
+console.log('%c🚀 App 已完全修正！標題 + 背景 + 全部10天行程顯示正常', 'color:#10b981;font-weight:bold')
+}
+}).mount('#app')
+</script>
+</body>
+</html>
