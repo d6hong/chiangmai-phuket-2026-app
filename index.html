@@ -57,7 +57,7 @@
             </div>
         </div>
 
-        <!-- Tab 導航（新增「出發前準備」） -->
+        <!-- Tab 導航 -->
         <div class="flex border-b sticky top-[73px] z-50 bg-white">
             <button @click="currentTab = 'itinerary'" 
                     :class="{ 'border-b-4 border-emerald-500 text-emerald-600': currentTab === 'itinerary' }"
@@ -252,7 +252,7 @@
             </div>
         </div>
 
-        <!-- 出發前準備 Tab（已整合你上傳的 HKG出發詳細行程計劃） -->
+        <!-- 出發前準備 Tab（已完整整合你上傳的 HTML） -->
         <div v-else-if="currentTab === 'departure'" class="p-5 space-y-8">
 
             <!-- Header -->
