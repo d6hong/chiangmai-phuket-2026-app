@@ -43,7 +43,7 @@
                 <span class="text-4xl">🇹🇭</span>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">2026 清邁 & 布吉</h1>
-                    <p class="text-sm opacity-90 flex items-center gap-1">🏍️ chanb LoLo</p>
+                    <p class="text-sm opacity-90 flex items-center gap-1">❤️ 🏍️ chanb LoLo</p>
                 </div>
             </div>
             
@@ -243,6 +243,7 @@
                     </div>
                 </div>
             </div>
+            <!-- 最後更新時間（已強制顯示 + 正確格式） -->
             <div class="text-center text-xs text-emerald-500">
                 最後更新：{{ lastUpdateTime }}<br>
                 (數據每小時自動更新一次)
@@ -359,7 +360,7 @@
                     rates: { THB: 4.17 },
                     customRate: null,
                     tempRate: 4.17,
-                    lastUpdateTime: '',
+                    lastUpdateTime: '',   // 初始為空，mounted 會立即填入
                     newRecord: {
                         date: new Date().toISOString().slice(0,10),
                         description: '',
@@ -544,6 +545,9 @@
             },
             watch: {
                 currentTab(newTab) {
+                    if (newTab === 'rates') {
+                        this.$nextTick(() => this.updateLastUpdateTime());
+                    }
                     if (newTab === 'accounting') {
                         this.$nextTick(() => this.updateExpenseChart());
                     }
@@ -553,13 +557,13 @@
                 selectDay(index) { this.selectedDayIndex = index; },
                 getCategoryColor(category) {
                     const colorMap = {
-                        '食物': '#FF6384',   // 粉紅
-                        '交通': '#36A2EB',   // 青
-                        '入油': '#FFCE56',   // 黃
-                        '住宿': '#4BC0C0',   // 青/藍
-                        '娛樂': '#9966FF',   // 紫
-                        '購物': '#FF9F40',   // 橙
-                        '其他': '#C9CBCF'    // 灰
+                        '食物': '#FF6384',
+                        '交通': '#36A2EB',
+                        '入油': '#FFCE56',
+                        '住宿': '#4BC0C0',
+                        '娛樂': '#9966FF',
+                        '購物': '#FF9F40',
+                        '其他': '#C9CBCF'
                     };
                     return colorMap[category] || '#C9CBCF';
                 },
@@ -616,7 +620,6 @@
 
                     const labels = Object.keys(categoryTotals);
                     const data = Object.values(categoryTotals);
-                    // 動態取得正確顏色（保證圓餅圖與類別標籤顏色完全一致）
                     const colors = labels.map(label => this.getCategoryColor(label));
 
                     this.expenseChart = new Chart(canvas, {
@@ -648,14 +651,23 @@
                         }
                     });
                 },
+                getCurrentTime() {
+                    const now = new Date();
+                    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+                },
+                updateLastUpdateTime() {
+                    this.lastUpdateTime = this.getCurrentTime();
+                },
                 async fetchRates() {
                     try {
                         const res = await fetch('https://api.exchangerate.host/latest?base=HKD&symbols=THB');
                         const data = await res.json();
                         this.rates.THB = data.rates.THB;
-                        const now = new Date();
-                        this.lastUpdateTime = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-                    } catch(e) {}
+                    } catch(e) {
+                        console.log('匯率 API 暫時無法取得，使用上次數值');
+                    }
+                    // 無論成功或失敗，都更新時間
+                    this.updateLastUpdateTime();
                 },
                 saveCustomRate() {
                     this.customRate = parseFloat(this.tempRate);
@@ -672,7 +684,8 @@
             },
             mounted() {
                 this.loadExpenses();
-                this.fetchRates();
+                this.updateLastUpdateTime();   // ← 立即顯示時間
+                this.fetchRates();            // ← 再去拉最新匯率並更新時間
             }
         }).mount('#app')
     </script>
