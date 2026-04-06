@@ -19,6 +19,8 @@ body {
     background-position: center;
     background-attachment: fixed;
     position: relative;
+    /* 確保 body 背景色填滿，避免滾動時有空隙 */
+    background-color: #FFF9E6;
 }
 body::before {
     content: '';
@@ -33,39 +35,51 @@ body::before {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .countdown-card { background: linear-gradient(135deg, #FFFFFF, #FFF2D1); border-radius: 24px; }
 .flight-boarding { background: linear-gradient(135deg, #F7B32B, #F9A03F); }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.4s ease, transform 0.4s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(15px); }
+
+/* 全新頁面切換過場動畫 */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.fade-enter-from { opacity: 0; transform: translateY(15px); }
+.fade-leave-to { opacity: 0; transform: translateY(-10px); }
+
+/* 針對卡片內容嘅進場動畫 */
+@keyframes slideUpFade {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up {
+    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 </style>
 </head>
 <body class="min-h-screen pb-8 text-[#3A302A]">
-<div id="app" class="max-w-2xl mx-auto bg-[#FFF9E6] min-h-screen shadow-2xl rounded-3xl overflow-hidden">
+<div id="app" class="max-w-2xl mx-auto bg-[#FFF9E6] min-h-screen shadow-2xl rounded-b-3xl sm:rounded-3xl overflow-hidden">
 
-<div class="bg-[#F7B32B] text-white px-6 py-5 flex items-center justify-between sticky top-0 z-50 shadow-sm">
-    <div class="flex items-center gap-3">
-        <span class="text-4xl drop-shadow-md">🇹🇭</span>
-        <div>
-            <h1 class="text-xl font-black tracking-tight">2026 Chiang Mai Phuket</h1>
-            <p class="text-sm opacity-90 flex items-center gap-1 font-bold text-[#A8201A]">❣️ chanb 🏍️ LoLo</p>
+<div class="bg-[#F7B32B] text-white px-4 py-4 sm:px-6 sm:py-5 flex items-center justify-between sticky top-0 z-50 shadow-md">
+    <div class="flex items-center gap-2 sm:gap-3 overflow-hidden pr-2">
+        <span class="text-3xl sm:text-4xl drop-shadow-md flex-shrink-0">🇹🇭</span>
+        <div class="min-w-0">
+            <h1 class="text-[16px] sm:text-xl font-black tracking-tight truncate">2026 Chiang Mai Phuket</h1>
+            <p class="text-[11px] sm:text-sm opacity-90 flex items-center gap-1 font-bold text-[#A8201A] truncate">❣️ chanb 🏍️ LoLo</p>
         </div>
     </div>
-    <div @click="openRateModal" class="text-right cursor-pointer hover:bg-white/20 px-4 py-2 rounded-3xl transition-colors">
-        <div class="text-xs bg-white/25 px-4 py-1.5 rounded-3xl flex items-center gap-1 shadow-inner">
+    <div @click="openRateModal" class="flex-shrink-0 text-right cursor-pointer hover:bg-white/20 px-2 py-1.5 rounded-2xl transition-colors">
+        <div class="text-[11px] sm:text-xs bg-white/25 px-2 sm:px-4 py-1.5 rounded-full flex items-center justify-center gap-1 shadow-inner whitespace-nowrap">
             <span class="font-bold text-[#A8201A]">HKD ≈ {{ (customRate || rates.THB) ? (customRate || rates.THB).toFixed(2) : '—' }} ฿</span>
         </div>
-        <div class="text-[10px] text-white/80 mt-1 font-medium">點擊修改實際兌換率</div>
+        <div class="text-[9px] sm:text-[10px] text-white/90 mt-1 font-medium text-center">修改匯率</div>
     </div>
 </div>
 
-<div class="flex border-b border-[#F5E6CC] sticky top-[75px] z-40 bg-white/90 backdrop-blur-md">
-    <button @click="currentTab = 'itinerary'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'itinerary', 'text-[#B89B7E]': currentTab !== 'itinerary' }" class="flex-1 py-4 text-lg transition-colors">行程表</button>
-    <button @click="currentTab = 'accounting'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'accounting', 'text-[#B89B7E]': currentTab !== 'accounting' }" class="flex-1 py-4 text-lg transition-colors">旅費管理</button>
-    <button @click="currentTab = 'rates'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'rates', 'text-[#B89B7E]': currentTab !== 'rates' }" class="flex-1 py-4 text-lg transition-colors">實時匯率</button>
-    <button @click="currentTab = 'departure'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'departure', 'text-[#B89B7E]': currentTab !== 'departure' }" class="flex-1 py-4 text-lg transition-colors">出發前準備</button>
+<div class="flex border-b border-[#F5E6CC] sticky top-[68px] sm:top-[76px] z-40 bg-white/95 backdrop-blur-md shadow-sm">
+    <button @click="currentTab = 'itinerary'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'itinerary', 'text-[#B89B7E]': currentTab !== 'itinerary' }" class="flex-1 py-3 sm:py-4 text-sm sm:text-lg transition-colors">行程表</button>
+    <button @click="currentTab = 'accounting'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'accounting', 'text-[#B89B7E]': currentTab !== 'accounting' }" class="flex-1 py-3 sm:py-4 text-sm sm:text-lg transition-colors">旅費管理</button>
+    <button @click="currentTab = 'rates'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'rates', 'text-[#B89B7E]': currentTab !== 'rates' }" class="flex-1 py-3 sm:py-4 text-sm sm:text-lg transition-colors">實時匯率</button>
+    <button @click="currentTab = 'departure'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'departure', 'text-[#B89B7E]': currentTab !== 'departure' }" class="flex-1 py-3 sm:py-4 text-sm sm:text-lg transition-colors">準備清單</button>
 </div>
 
 <transition name="fade" mode="out-in">
-    <div v-if="currentTab === 'itinerary'" key="itinerary" class="p-5">
-        <h2 class="text-2xl font-black mb-5 flex items-center gap-2 text-[#A8201A]"><i class="fas fa-calendar-alt text-[#F7B32B]"></i> 14日旅行日程</h2>
+    <div v-if="currentTab === 'itinerary'" key="itinerary" class="p-4 sm:p-5 animate-slide-up">
+        <h2 class="text-xl sm:text-2xl font-black mb-4 sm:mb-5 flex items-center gap-2 text-[#A8201A]"><i class="fas fa-calendar-alt text-[#F7B32B]"></i> 14日旅行日程</h2>
         <div class="flex gap-3 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory">
             <div v-for="(day, index) in days" :key="day.date" @click="selectDay(index)" class="day-card min-w-[88px] bg-white rounded-3xl shadow-sm border border-[#F5E6CC] p-3 text-center snap-center cursor-pointer flex-shrink-0" :class="{ selected: selectedDayIndex === index }">
                 <div class="text-[#F7B32B] text-xs font-bold" :class="{'text-white/90': selectedDayIndex === index}">Day {{ index + 1 }}</div>
@@ -74,57 +88,60 @@ body::before {
             </div>
         </div>
         <div v-if="selectedDay" class="bg-white rounded-3xl shadow-lg border border-[#F5E6CC] overflow-hidden mt-2">
-            <div class="px-6 py-5 bg-[#FFF2D1] border-b border-[#F5E6CC]">
+            <div class="px-5 sm:px-6 py-4 sm:py-5 bg-[#FFF2D1] border-b border-[#F5E6CC]">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-[#F7B32B] rounded-full flex items-center justify-center text-2xl shadow-sm text-white">📅</div>
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-[#F7B32B] rounded-full flex items-center justify-center text-xl sm:text-2xl shadow-sm text-white">📅</div>
                     <div class="flex-1">
-                        <div class="font-black text-xl text-[#3A302A]">Day {{ selectedDayIndex + 1 }} • {{ selectedDay.displayDate }}</div>
+                        <div class="font-black text-lg sm:text-xl text-[#3A302A]">Day {{ selectedDayIndex + 1 }} • {{ selectedDay.displayDate }}</div>
                         <div class="text-[#A8201A] font-bold text-sm mt-0.5">{{ selectedDay.title }}</div>
                     </div>
                 </div>
             </div>
-            <div v-if="selectedDay.flight" class="flight-boarding mx-6 mt-6 rounded-3xl overflow-hidden shadow-md">
-                <div class="px-6 py-4 text-white text-xs flex justify-between items-center font-bold">
+            <div v-if="selectedDay.flight" class="flight-boarding mx-4 sm:mx-6 mt-5 sm:mt-6 rounded-3xl overflow-hidden shadow-md">
+                <div class="px-5 py-3 sm:px-6 sm:py-4 text-white text-xs flex justify-between items-center font-bold">
                     <div class="flex items-center gap-2"><i class="fas fa-plane text-lg"></i> BOARDING PASS</div>
                     <div class="bg-white/20 px-3 py-1 rounded-full">{{ selectedDay.flight.number }}</div>
                 </div>
-                <div class="px-6 pb-6 flex justify-between items-center">
+                <div class="px-5 sm:px-6 pb-5 sm:pb-6 flex justify-between items-center">
                     <div class="text-center">
-                        <div class="text-5xl font-black text-white drop-shadow-sm">{{ selectedDay.flight.from }}</div>
+                        <div class="text-4xl sm:text-5xl font-black text-white drop-shadow-sm">{{ selectedDay.flight.from }}</div>
                         <div class="text-xs text-white/80 mt-1 font-medium">出發</div>
-                        <div class="text-3xl font-bold text-white">{{ selectedDay.flight.departure }}</div>
+                        <div class="text-2xl sm:text-3xl font-bold text-white">{{ selectedDay.flight.departure }}</div>
                     </div>
                     <div class="flex flex-col items-center">
-                        <i class="fas fa-plane text-4xl text-white rotate-45 drop-shadow-sm"></i>
-                        <div class="text-xs text-[#A8201A] bg-white/90 px-2 py-0.5 rounded-full mt-2 font-bold">直航</div>
+                        <i class="fas fa-plane text-3xl sm:text-4xl text-white rotate-45 drop-shadow-sm"></i>
+                        <div class="text-[10px] sm:text-xs text-[#A8201A] bg-white/90 px-2 py-0.5 rounded-full mt-2 font-bold">直航</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-5xl font-black text-white drop-shadow-sm">{{ selectedDay.flight.to }}</div>
+                        <div class="text-4xl sm:text-5xl font-black text-white drop-shadow-sm">{{ selectedDay.flight.to }}</div>
                         <div class="text-xs text-white/80 mt-1 font-medium">抵達</div>
-                        <div class="text-3xl font-bold text-white">{{ selectedDay.flight.arrival }}</div>
+                        <div class="text-2xl sm:text-3xl font-bold text-white">{{ selectedDay.flight.arrival }}</div>
                     </div>
                 </div>
-                <div class="bg-white text-[#3A302A] px-6 py-4 flex justify-between text-sm font-bold rounded-b-3xl">
-                    <div>日期<br><span class="text-xl text-[#A8201A]">{{ selectedDay.date }}</span></div>
-                    <div class="text-right">航班編號<br><span class="text-xl text-[#F7B32B]">{{ selectedDay.flight.number }}</span></div>
+                <div class="bg-white text-[#3A302A] px-5 sm:px-6 py-3 sm:py-4 flex justify-between text-xs sm:text-sm font-bold rounded-b-3xl">
+                    <div>日期<br><span class="text-lg sm:text-xl text-[#A8201A]">{{ selectedDay.date }}</span></div>
+                    <div class="text-right">航班編號<br><span class="text-lg sm:text-xl text-[#F7B32B]">{{ selectedDay.flight.number }}</span></div>
                 </div>
             </div>
-            <div class="p-6">
+            <div class="p-5 sm:p-6">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b-2 border-[#F7B32B]/20 text-[#A8201A]">
-                            <th class="text-left py-3 font-black w-24">時間</th>
+                            <th class="text-left py-3 font-black w-20 sm:w-24">時間</th>
                             <th class="text-left py-3 font-black">活動</th>
-                            <th class="text-center py-3 font-black w-28">騎行距離</th>
-                            <th class="text-left py-3 font-black">備註</th>
+                            <th class="text-center py-3 font-black w-24 sm:w-28">騎行距離</th>
+                            <th class="text-left py-3 font-black hidden sm:table-cell">備註</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-[#F5E6CC]">
                         <tr v-for="(act, i) in selectedDay.activities" :key="i" class="hover:bg-[#FFF9E6]/50 transition-colors">
                             <td class="py-4 font-bold text-[#F7B32B]">{{ act.time }}</td>
-                            <td class="py-4 font-bold text-[#3A302A]">{{ act.activity }}</td>
-                            <td class="py-4 text-center text-xs font-medium text-[#7D6B5D]">{{ act.ride }}</td>
-                            <td class="py-4 text-xs font-bold text-[#A8201A]">{{ act.note }}</td>
+                            <td class="py-4 font-bold text-[#3A302A]">
+                                {{ act.activity }}
+                                <div class="text-[11px] text-[#A8201A] sm:hidden mt-1">{{ act.note }}</div>
+                            </td>
+                            <td class="py-4 text-center text-[11px] sm:text-xs font-medium text-[#7D6B5D]">{{ act.ride }}</td>
+                            <td class="py-4 text-xs font-bold text-[#A8201A] hidden sm:table-cell">{{ act.note }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -132,27 +149,27 @@ body::before {
         </div>
     </div>
 
-    <div v-else-if="currentTab === 'accounting'" key="accounting" class="p-5 space-y-6">
+    <div v-else-if="currentTab === 'accounting'" key="accounting" class="p-4 sm:p-5 space-y-5 sm:space-y-6 animate-slide-up">
         <div class="flex justify-between items-center">
-            <h2 class="text-2xl font-black text-[#A8201A] flex items-center gap-2">
+            <h2 class="text-xl sm:text-2xl font-black text-[#A8201A] flex items-center gap-2">
                 <i class="fas fa-receipt text-[#F7B32B]"></i> 旅費管理
             </h2>
             <div class="flex gap-2">
-                <button @click="openAddModal" class="bg-[#F7B32B] hover:bg-[#F9A03F] text-white px-5 py-3 rounded-2xl flex items-center gap-2 text-sm font-bold shadow-lg active:scale-95 transition-all">
-                    <i class="fas fa-plus"></i> 新增支出
+                <button @click="openAddModal" class="bg-[#F7B32B] hover:bg-[#F9A03F] text-white px-3 sm:px-5 py-2.5 sm:py-3 rounded-2xl flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-bold shadow-lg active:scale-95 transition-all">
+                    <i class="fas fa-plus"></i> 新增
                 </button>
-                <button @click="openBudgetModal" class="bg-[#A8201A] hover:bg-[#8A1914] text-white px-5 py-3 rounded-2xl flex items-center gap-2 text-sm font-bold shadow-lg active:scale-95 transition-all">
+                <button @click="openBudgetModal" class="bg-[#A8201A] hover:bg-[#8A1914] text-white px-3 sm:px-5 py-2.5 sm:py-3 rounded-2xl flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-bold shadow-lg active:scale-95 transition-all">
                     <i class="fas fa-wallet"></i> 預算
                 </button>
             </div>
         </div>
 
-        <div class="bg-white border-2 border-[#F7B32B]/30 rounded-3xl p-8 text-center shadow-lg relative overflow-hidden">
+        <div class="bg-white border-2 border-[#F7B32B]/30 rounded-3xl p-6 sm:p-8 text-center shadow-lg relative overflow-hidden">
             <div class="absolute -right-10 -top-10 text-[#F7B32B] opacity-10 text-9xl"><i class="fas fa-coins"></i></div>
             <div class="relative z-10">
-                <div class="flex justify-between items-center mb-4">
-                    <div class="text-[#A8201A] font-bold">總支出</div>
-                    <div v-if="totalBudget" class="text-xs font-black px-4 py-1.5 rounded-full shadow-inner"
+                <div class="flex justify-between items-center mb-3 sm:mb-4">
+                    <div class="text-[#A8201A] font-bold text-sm sm:text-base">總支出</div>
+                    <div v-if="totalBudget" class="text-[10px] sm:text-xs font-black px-3 py-1 sm:py-1.5 rounded-full shadow-inner"
                         :class="{
                             'bg-[#D4EDDA] text-[#155724]': usagePercent < 80,
                             'bg-[#FFF3CD] text-[#856404]': usagePercent >= 80 && usagePercent < 100,
@@ -161,16 +178,16 @@ body::before {
                         {{ usagePercent.toFixed(0) }}% 已用
                     </div>
                 </div>
-                <div class="text-5xl font-black text-[#3A302A] tracking-tight">{{ totalHKD.toLocaleString() }} <span class="text-2xl text-[#F7B32B]">HKD</span></div>
-                <div class="text-[#7D6B5D] text-xl flex items-center justify-center gap-2 mt-2 font-bold">
+                <div class="text-4xl sm:text-5xl font-black text-[#3A302A] tracking-tight">{{ totalHKD.toLocaleString() }} <span class="text-xl sm:text-2xl text-[#F7B32B]">HKD</span></div>
+                <div class="text-[#7D6B5D] text-lg sm:text-xl flex items-center justify-center gap-2 mt-2 font-bold">
                     ≈ <span class="text-[#A8201A]">{{ totalTHB.toLocaleString() }} ฿</span>
                 </div>
-                <div v-if="totalBudget" class="mt-8">
-                    <div class="flex justify-between text-xs mb-2 font-bold text-[#7D6B5D]">
+                <div v-if="totalBudget" class="mt-6 sm:mt-8">
+                    <div class="flex justify-between text-[11px] sm:text-xs mb-2 font-bold text-[#7D6B5D]">
                         <span>已用</span>
                         <span class="text-[#A8201A]">剩餘 {{ remainingBudget.toLocaleString() }} HKD</span>
                     </div>
-                    <div class="h-4 bg-[#FFF9E6] border border-[#F5E6CC] rounded-full overflow-hidden shadow-inner">
+                    <div class="h-3 sm:h-4 bg-[#FFF9E6] border border-[#F5E6CC] rounded-full overflow-hidden shadow-inner">
                         <div class="h-full transition-all duration-500 ease-out"
                             :class="{
                                 'bg-[#F7B32B]': usagePercent < 80,
@@ -179,200 +196,205 @@ body::before {
                             }"
                             :style="{ width: Math.min(usagePercent, 100) + '%' }"></div>
                     </div>
-                    <div class="text-xs text-[#B89B7E] mt-2 font-bold">設定總預算：{{ totalBudget.toLocaleString() }} HKD</div>
+                    <div class="text-[11px] sm:text-xs text-[#B89B7E] mt-2 font-bold">設定總預算：{{ totalBudget.toLocaleString() }} HKD</div>
                 </div>
-                <div v-else class="mt-6 text-sm font-bold text-[#F7B32B] flex items-center justify-center gap-1 bg-[#FFF9E6] py-2 rounded-xl border border-[#F7B32B]/30 cursor-pointer hover:bg-[#FFF2D1]" @click="openBudgetModal">
+                <div v-else class="mt-5 sm:mt-6 text-[11px] sm:text-sm font-bold text-[#F7B32B] flex items-center justify-center gap-1 bg-[#FFF9E6] py-2 rounded-xl border border-[#F7B32B]/30 cursor-pointer hover:bg-[#FFF2D1]" @click="openBudgetModal">
                     <i class="fas fa-hand-pointer"></i> 點擊設定總預算
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white rounded-3xl p-6 shadow-md border border-[#F5E6CC]">
-                <h3 class="text-lg font-black mb-4 flex items-center gap-2 text-[#A8201A]">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+            <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md border border-[#F5E6CC]">
+                <h3 class="text-base sm:text-lg font-black mb-4 flex items-center gap-2 text-[#A8201A]">
                     <i class="fas fa-chart-pie text-[#F7B32B]"></i> 支出分佈
                 </h3>
-                <div class="relative h-72 flex items-center justify-center">
+                <div class="relative h-64 sm:h-72 flex items-center justify-center">
                     <canvas id="expenseChart"></canvas>
                     <div v-if="expenses.length === 0" class="absolute inset-0 flex flex-col items-center justify-center text-[#D1C8B8] bg-white/90 rounded-3xl">
-                        <i class="fas fa-chart-pie text-6xl mb-3 opacity-50"></i>
-                        <p class="text-sm font-bold text-center">暫無數據<br>快啲新增支出啦</p>
+                        <i class="fas fa-chart-pie text-5xl sm:text-6xl mb-3 opacity-50"></i>
+                        <p class="text-xs sm:text-sm font-bold text-center">暫無數據<br>快啲新增支出啦</p>
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-3xl p-6 shadow-md border border-[#F5E6CC]">
-                <h3 class="text-lg font-black mb-4 flex items-center gap-2 text-[#A8201A]">
-                    <i class="fas fa-chart-line text-[#F7B32B]"></i> 每日走勢
+            <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md border border-[#F5E6CC]">
+                <h3 class="text-base sm:text-lg font-black mb-4 flex items-center gap-2 text-[#A8201A]">
+                    <i class="fas fa-chart-line text-[#F7B32B]"></i> 支出走勢
                 </h3>
-                <div class="relative h-72 flex items-center justify-center">
+                <div class="relative h-64 sm:h-72 flex items-center justify-center">
                     <canvas id="expenseLineChart"></canvas>
                     <div v-if="expenses.length === 0" class="absolute inset-0 flex flex-col items-center justify-center text-[#D1C8B8] bg-white/90 rounded-3xl">
-                        <i class="fas fa-chart-line text-6xl mb-3 opacity-50"></i>
-                        <p class="text-sm font-bold text-center">暫無數據<br>趨勢圖會喺度顯示</p>
+                        <i class="fas fa-chart-line text-5xl sm:text-6xl mb-3 opacity-50"></i>
+                        <p class="text-xs sm:text-sm font-bold text-center">暫無數據<br>趨勢圖會喺度顯示</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="space-y-4">
-            <div v-for="expense in expenses" :key="expense.id" class="bg-white rounded-2xl p-5 flex justify-between items-center shadow-sm border-l-8 hover:shadow-md transition-shadow" :style="{ borderLeftColor: getCategoryColor(expense.category) }">
+        <div class="space-y-3 sm:space-y-4">
+            <div v-for="expense in expenses" :key="expense.id" class="bg-white rounded-2xl p-4 sm:p-5 flex justify-between items-center shadow-sm border-l-[6px] sm:border-l-8 hover:shadow-md transition-shadow" :style="{ borderLeftColor: getCategoryColor(expense.category) }">
                 <div class="flex-1">
-                    <div class="font-black text-lg text-[#3A302A]">{{ expense.description }}</div>
-                    <div class="text-xs flex items-center gap-2 mt-2 font-bold">
-                        <span class="text-[#A8201A] bg-[#FFF9E6] px-2 py-1 rounded-md">{{ expense.date.substring(5) }}</span>
-                        <span :style="{ backgroundColor: getCategoryColor(expense.category) }" class="px-2 py-1 text-white rounded-md text-[10px] shadow-sm uppercase tracking-wider">{{ expense.category }}</span>
-                        <span class="text-[#7D6B5D]"><i class="fas fa-wallet mr-1"></i>{{ expense.paymentMethod }}</span>
+                    <div class="font-black text-base sm:text-lg text-[#3A302A]">{{ expense.description }}</div>
+                    <div class="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-2 mt-1 sm:mt-2 font-bold">
+                        <span class="text-[#A8201A] bg-[#FFF9E6] px-1.5 sm:px-2 py-1 rounded-md">{{ expense.date.substring(5) }}</span>
+                        <span :style="{ backgroundColor: getCategoryColor(expense.category) }" class="px-1.5 sm:px-2 py-1 text-white rounded-md text-[9px] sm:text-[10px] shadow-sm uppercase tracking-wider">{{ expense.category }}</span>
+                        <span class="text-[#7D6B5D] hidden sm:inline"><i class="fas fa-wallet mr-1"></i>{{ expense.paymentMethod }}</span>
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="font-black text-2xl text-[#3A302A]">-{{ expense.amount }} <span class="text-sm text-[#F7B32B]">THB</span></div>
-                    <div class="text-xs font-bold text-[#A8201A] mt-1">≈ {{ Math.round(expense.amount / currentRate) }} HKD</div>
+                    <div class="font-black text-xl sm:text-2xl text-[#3A302A]">-{{ expense.amount }} <span class="text-xs sm:text-sm text-[#F7B32B]">THB</span></div>
+                    <div class="text-[10px] sm:text-xs font-bold text-[#A8201A] mt-0.5 sm:mt-1">≈ {{ Math.round(expense.amount / currentRate) }} HKD</div>
                 </div>
-                <button @click="deleteExpense(expense.id)" class="ml-5 text-[#D1C8B8] hover:text-[#A8201A] transition-colors p-2 bg-[#FFF9E6] rounded-full hover:bg-red-50">
+                <button @click="deleteExpense(expense.id)" class="ml-3 sm:ml-5 text-[#D1C8B8] hover:text-[#A8201A] transition-colors p-2 bg-[#FFF9E6] rounded-full hover:bg-red-50">
                     <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
         </div>
         
-        <div v-if="expenses.length === 0" class="text-center py-16 text-[#B89B7E]">
-            <i class="fas fa-ghost text-6xl mb-4 opacity-30 text-[#F7B32B]"></i>
-            <p class="font-bold text-lg">空空如也～</p>
-            <p class="text-sm mt-1">去玩記得紀錄低使費呀！</p>
+        <div v-if="expenses.length === 0" class="text-center py-12 sm:py-16 text-[#B89B7E]">
+            <i class="fas fa-ghost text-5xl sm:text-6xl mb-4 opacity-30 text-[#F7B32B]"></i>
+            <p class="font-bold text-base sm:text-lg">空空如也～</p>
+            <p class="text-xs sm:text-sm mt-1">去玩記得紀錄低使費呀！</p>
         </div>
     </div>
 
-    <div v-else-if="currentTab === 'rates'" key="rates" class="p-5">
-        <h2 class="text-2xl font-black mb-6 flex items-center gap-2 text-[#A8201A]"><i class="fas fa-exchange-alt text-[#F7B32B]"></i> 實時匯率計算</h2>
-        <div class="bg-white border-2 border-[#F7B32B]/30 rounded-3xl p-8 shadow-lg mb-8 relative overflow-hidden">
+    <div v-else-if="currentTab === 'rates'" key="rates" class="p-4 sm:p-5 animate-slide-up">
+        <h2 class="text-xl sm:text-2xl font-black mb-5 sm:mb-6 flex items-center gap-2 text-[#A8201A]"><i class="fas fa-exchange-alt text-[#F7B32B]"></i> 實時匯率計算</h2>
+        <div class="bg-white border-2 border-[#F7B32B]/30 rounded-3xl p-6 sm:p-8 shadow-lg mb-6 sm:mb-8 relative overflow-hidden">
             <div class="absolute -right-5 -bottom-5 text-[#F7B32B] opacity-10 text-9xl"><i class="fas fa-globe-asia"></i></div>
             <div class="flex items-center justify-between relative z-10">
-                <div class="flex items-center gap-4">
-                    <span class="text-5xl drop-shadow-md">🇭🇰</span>
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <span class="text-4xl sm:text-5xl drop-shadow-md">🇭🇰</span>
                     <div>
-                        <div class="font-black text-4xl text-[#3A302A]">1 HKD</div>
-                        <div class="text-[#A8201A] font-bold mt-1">港幣</div>
+                        <div class="font-black text-2xl sm:text-3xl text-[#3A302A]">1 <span class="text-base sm:text-lg text-[#7D6B5D]">HKD</span></div>
+                        <div class="text-[#A8201A] text-xs sm:text-sm font-bold mt-0.5">港幣</div>
                     </div>
                 </div>
-                <div class="text-4xl text-[#F7B32B] animate-pulse">→</div>
-                <div class="text-right flex items-center gap-4">
+                <div class="text-3xl sm:text-4xl text-[#F7B32B] animate-pulse">→</div>
+                <div class="text-right flex items-center gap-3 sm:gap-4">
                     <div>
-                        <div class="font-black text-4xl text-[#3A302A]">{{ rates.THB ? rates.THB.toFixed(4) : '—' }}</div>
-                        <div class="text-[#F7B32B] font-bold mt-1">泰銖 ฿</div>
+                        <div class="font-black text-2xl sm:text-3xl text-[#3A302A]">{{ rates.THB ? rates.THB.toFixed(4) : '—' }}</div>
+                        <div class="text-[#F7B32B] text-xs sm:text-sm font-bold mt-0.5">泰銖 ฿</div>
                     </div>
-                    <span class="text-5xl drop-shadow-md">🇹🇭</span>
+                    <span class="text-4xl sm:text-5xl drop-shadow-md">🇹🇭</span>
                 </div>
             </div>
         </div>
-        <div class="text-center text-xs font-bold text-[#B89B7E] bg-white py-3 rounded-xl shadow-sm border border-[#F5E6CC]">
+        <div class="text-center text-[10px] sm:text-xs font-bold text-[#B89B7E] bg-white py-3 rounded-xl shadow-sm border border-[#F5E6CC]">
             <i class="fas fa-sync-alt mr-1"></i> 資料來源：Fawazahmed0 Currency API<br>
             最後更新：{{ lastUpdateTime }}
         </div>
     </div>
 
-    <div v-else-if="currentTab === 'departure'" key="departure" class="p-5 space-y-8">
-        <div class="countdown-card border-2 border-[#F7B32B]/30 p-6 shadow-lg text-[#3A302A] relative overflow-hidden">
+    <div v-else-if="currentTab === 'departure'" key="departure" class="p-4 sm:p-5 space-y-6 sm:space-y-8 animate-slide-up">
+        <div class="countdown-card border-2 border-[#F7B32B]/30 p-5 sm:p-6 shadow-lg text-[#3A302A] relative overflow-hidden">
             <div class="flex justify-between items-start relative z-10">
                 <div>
-                    <div class="text-xs tracking-widest font-black text-[#A8201A] bg-white/60 inline-block px-3 py-1 rounded-full mb-2 shadow-sm">COUNTDOWN</div>
-                    <div class="flex items-baseline gap-3">
-                        <span class="text-6xl font-black text-[#F7B32B] drop-shadow-sm">{{ countdown.days }}</span>
-                        <span class="text-2xl font-black">天</span>
-                        <span class="text-4xl font-black text-[#A8201A]">{{ countdown.hours.toString().padStart(2,'0') }}:{{ countdown.minutes.toString().padStart(2,'0') }}:{{ countdown.seconds.toString().padStart(2,'0') }}</span>
+                    <div class="text-[10px] sm:text-xs tracking-widest font-black text-[#A8201A] bg-white/60 inline-block px-2 sm:px-3 py-1 rounded-full mb-2 shadow-sm">COUNTDOWN</div>
+                    <div class="flex items-baseline gap-2 sm:gap-3">
+                        <span class="text-5xl sm:text-6xl font-black text-[#F7B32B] drop-shadow-sm">{{ countdown.days }}</span>
+                        <span class="text-xl sm:text-2xl font-black">天</span>
+                        <span class="text-2xl sm:text-4xl font-black text-[#A8201A]">{{ countdown.hours.toString().padStart(2,'0') }}:{{ countdown.minutes.toString().padStart(2,'0') }}:{{ countdown.seconds.toString().padStart(2,'0') }}</span>
                     </div>
                 </div>
             </div>
-            <div class="mt-8 h-3 bg-[#FFF9E6] border border-[#F5E6CC] rounded-full relative shadow-inner">
+            <div class="mt-6 sm:mt-8 h-2.5 sm:h-3 bg-[#FFF9E6] border border-[#F5E6CC] rounded-full relative shadow-inner">
                 <div class="h-full bg-gradient-to-r from-[#F7B32B] to-[#F9A03F] rounded-full transition-all duration-1000 ease-out" :style="{ width: countdown.progress + '%' }"></div>
                 <div class="absolute top-1/2 -translate-y-1/2 transition-all duration-1000 drop-shadow-lg" :style="{ left: `calc(${countdown.progress}% - 14px)` }">
-                    <span class="text-3xl">✈️</span>
+                    <span class="text-2xl sm:text-3xl">✈️</span>
                 </div>
             </div>
-            <div class="text-center text-sm font-bold text-[#7D6B5D] mt-5"><i class="far fa-clock mr-1"></i> 2026-05-10 07:50 起飛</div>
+            <div class="text-center text-xs sm:text-sm font-bold text-[#7D6B5D] mt-4 sm:mt-5"><i class="far fa-clock mr-1"></i> 2026-05-10 07:50 起飛</div>
         </div>
 
-        <div class="bg-gradient-to-br from-[#F7B32B] to-[#F9A03F] text-white rounded-3xl p-8 text-center shadow-lg relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-4 opacity-20 text-6xl"><i class="fas fa-passport"></i></div>
-            <h1 class="text-2xl font-black mb-4 relative z-10">香港國際機場出發</h1>
-            <div class="inline-block bg-white text-[#A8201A] px-6 py-2.5 rounded-full text-sm font-black shadow-md relative z-10">
+        <div class="bg-gradient-to-br from-[#F7B32B] to-[#F9A03F] text-white rounded-3xl p-6 sm:p-8 text-center shadow-lg relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 opacity-20 text-5xl sm:text-6xl"><i class="fas fa-passport"></i></div>
+            <h1 class="text-xl sm:text-2xl font-black mb-4 relative z-10">香港國際機場出發</h1>
+            <div class="inline-block bg-white text-[#A8201A] px-5 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-black shadow-md relative z-10">
                 UO738　HKG → CNX　｜　07:50
             </div>
-            <p class="mt-5 text-sm font-bold opacity-90 relative z-10 bg-black/10 inline-block px-4 py-1.5 rounded-full"><i class="fas fa-coffee"></i> Kyra Lounge ｜ <i class="fas fa-user-check"></i> 櫃檯 Check-in</p>
+            <p class="mt-4 sm:mt-5 text-xs sm:text-sm font-bold opacity-90 relative z-10 bg-black/10 inline-block px-3 sm:px-4 py-1.5 rounded-full"><i class="fas fa-coffee"></i> Kyra Lounge ｜ <i class="fas fa-user-check"></i> 櫃檯 Check-in</p>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-3xl p-6 shadow-md border-t-4 border-[#F7B32B]">
-                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-[#F5E6CC]">
-                    <span class="text-4xl bg-[#FFF9E6] p-2 rounded-2xl">🧑🏻</span>
+        <div class="grid md:grid-cols-2 gap-5 sm:gap-6">
+            <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md border-t-4 border-[#F7B32B]">
+                <div class="flex items-center gap-3 mb-5 sm:mb-6 pb-4 border-b border-[#F5E6CC]">
+                    <span class="text-3xl sm:text-4xl bg-[#FFF9E6] p-2 rounded-2xl">🧑🏻</span>
                     <div>
-                        <h2 class="text-xl font-black text-[#3A302A]">我的行程</h2>
-                        <a href="https://hkbus.app/zh/route/n29" target="_blank" class="text-[#A8201A] hover:text-[#F7B32B] text-xs font-bold transition-colors"><i class="fas fa-bus mr-1"></i>N29 路線 (唐明苑)</a>
+                        <h2 class="text-lg sm:text-xl font-black text-[#3A302A]">我的行程</h2>
+                        <a href="https://hkbus.app/zh/route/n29" target="_blank" class="text-[#A8201A] hover:text-[#F7B32B] text-[11px] sm:text-xs font-bold transition-colors"><i class="fas fa-bus mr-1"></i>N29 路線 (唐明苑)</a>
                     </div>
                 </div>
-                <ul class="space-y-4 text-sm font-medium text-[#7D6B5D]">
-                    <li class="flex items-start gap-3"><span class="font-black text-[#F7B32B] w-12">03:30</span> <span>出發去唐明苑站</span></li>
-                    <li class="flex items-start gap-3"><span class="font-black text-[#F7B32B] w-12">05:40</span> <span>到達 T1 北面大堂</span></li>
-                    <li class="flex items-start gap-3 bg-[#FFF9E6] p-2 rounded-xl text-[#A8201A] font-bold"><span class="w-12 text-[#F7B32B]">05:45</span> <span>Aisle H 寄艙 Check-in</span></li>
-                    <li class="flex items-start gap-3"><span class="font-black text-[#F7B32B] w-12">06:30</span> <span>入 Kyra Lounge 食早餐</span></li>
-                    <li class="flex items-start gap-3"><span class="font-black text-[#F7B32B] w-12">07:20</span> <span>閘口關閉</span></li>
+                <ul class="space-y-3 sm:space-y-4 text-xs sm:text-sm font-medium text-[#7D6B5D]">
+                    <li class="flex items-start gap-3"><span class="font-black text-[#F7B32B] w-10 sm:w-12">03:30</span> <span>出發去唐明苑站</span></li>
+                    <li class="flex items-start gap-3"><span class="font-black text-[#F7B32B] w-10 sm:w-12">05:40</span> <span>到達 T1 北面大堂</span></li>
+                    <li class="flex items-start gap-3 bg-[#FFF9E6] p-2 rounded-xl text-[#A8201A] font-bold"><span class="w-10 sm:w-12 text-[#F7B32B]">05:45</span> <span>Aisle H 寄艙 Check-in</span></li>
+                    <li class="flex items-start gap-3"><span class="font-black text-[#F7B32B] w-10 sm:w-12">06:30</span> <span>入 Kyra Lounge 食早餐</span></li>
+                    <li class="flex items-start gap-3"><span class="font-black text-[#F7B32B] w-10 sm:w-12">07:20</span> <span>閘口關閉</span></li>
                 </ul>
             </div>
-            <div class="bg-white rounded-3xl p-6 shadow-md border-t-4 border-[#A8201A]">
-                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-[#F5E6CC]">
-                    <span class="text-4xl bg-[#FFF9E6] p-2 rounded-2xl">👶🏻</span>
+            <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md border-t-4 border-[#A8201A]">
+                <div class="flex items-center gap-3 mb-5 sm:mb-6 pb-4 border-b border-[#F5E6CC]">
+                    <span class="text-3xl sm:text-4xl bg-[#FFF9E6] p-2 rounded-2xl">👶🏻</span>
                     <div>
-                        <h2 class="text-xl font-black text-[#3A302A]">chanb 行程</h2>
-                        <a href="https://hkbus.app/zh/route/na37" target="_blank" class="text-[#A8201A] hover:text-[#F7B32B] text-xs font-bold transition-colors"><i class="fas fa-bus mr-1"></i>NA37 路線 (晴雲樓)</a>
+                        <h2 class="text-lg sm:text-xl font-black text-[#3A302A]">chanb 行程</h2>
+                        <a href="https://hkbus.app/zh/route/na37" target="_blank" class="text-[#A8201A] hover:text-[#F7B32B] text-[11px] sm:text-xs font-bold transition-colors"><i class="fas fa-bus mr-1"></i>NA37 路線 (晴雲樓)</a>
                     </div>
                 </div>
-                <ul class="space-y-4 text-sm font-medium text-[#7D6B5D]">
-                    <li class="flex items-start gap-3"><span class="font-black text-[#A8201A] w-12">03:10</span> <span>出發去晴雲樓站</span></li>
-                    <li class="flex items-start gap-3"><span class="font-black text-[#A8201A] w-12">05:20</span> <span>到達 T1 客運大樓</span></li>
-                    <li class="flex items-start gap-3 bg-[#FFF9E6] p-2 rounded-xl text-[#A8201A] font-bold"><span class="w-12 text-[#A8201A]">05:25</span> <span>Aisle H 寄艙 Check-in</span></li>
-                    <li class="flex items-start gap-3"><span class="font-black text-[#A8201A] w-12">06:00</span> <span>入 Kyra Lounge (買Pass)</span></li>
-                    <li class="flex items-start gap-3"><span class="font-black text-[#A8201A] w-12">07:20</span> <span>閘口關閉</span></li>
+                <ul class="space-y-3 sm:space-y-4 text-xs sm:text-sm font-medium text-[#7D6B5D]">
+                    <li class="flex items-start gap-3"><span class="font-black text-[#A8201A] w-10 sm:w-12">03:10</span> <span>出發去晴雲樓站</span></li>
+                    <li class="flex items-start gap-3"><span class="font-black text-[#A8201A] w-10 sm:w-12">05:20</span> <span>到達 T1 客運大樓</span></li>
+                    <li class="flex items-start gap-3 bg-[#FFF9E6] p-2 rounded-xl text-[#A8201A] font-bold"><span class="w-10 sm:w-12 text-[#A8201A]">05:25</span> <span>Aisle H 寄艙 Check-in</span></li>
+                    <li class="flex items-start gap-3"><span class="font-black text-[#A8201A] w-10 sm:w-12">06:00</span> <span>入 Kyra Lounge (買Pass)</span></li>
+                    <li class="flex items-start gap-3"><span class="font-black text-[#A8201A] w-10 sm:w-12">07:20</span> <span>閘口關閉</span></li>
                 </ul>
             </div>
         </div>
 
-        <div class="bg-white rounded-3xl p-8 shadow-lg border-2 border-[#F7B32B]">
-            <h3 class="text-2xl font-black text-[#A8201A] mb-8 flex items-center gap-3">
-                <i class="fas fa-suitcase-rolling text-[#F7B32B] text-3xl"></i> 泰國 14 日行李 Check List
-                <span class="text-xs bg-[#F7B32B] text-white px-3 py-1 rounded-full font-bold ml-auto shadow-sm">雲端同步</span>
+        <div class="bg-white rounded-3xl p-5 sm:p-8 shadow-lg border-2 border-[#F7B32B]">
+            <h3 class="text-lg sm:text-2xl font-black text-[#A8201A] mb-6 sm:mb-8 flex flex-row items-center justify-between gap-1">
+                <div class="flex items-center gap-1.5 sm:gap-3 overflow-hidden">
+                    <i class="fas fa-suitcase-rolling text-[#F7B32B] text-xl sm:text-3xl flex-shrink-0"></i> 
+                    <span class="truncate">泰國 14 日行李</span>
+                </div>
+                <span class="text-[11px] sm:text-sm bg-gradient-to-r from-[#F7B32B] to-[#F9A03F] text-white px-2 sm:px-4 py-1 sm:py-1.5 rounded-full font-black shadow-md whitespace-nowrap flex items-center gap-1 flex-shrink-0">
+                    <i class="fas fa-cloud-arrow-up"></i> 雲端同步
+                </span>
             </h3>
             
-            <div class="grid md:grid-cols-2 gap-10">
-                <div class="bg-[#FFF9E6]/50 p-6 rounded-2xl border border-[#F5E6CC]">
-                    <h4 class="text-lg font-black text-[#3A302A] mb-4 flex items-center gap-2">
+            <div class="grid md:grid-cols-2 gap-6 sm:gap-10">
+                <div class="bg-[#FFF9E6]/50 p-4 sm:p-6 rounded-2xl border border-[#F5E6CC]">
+                    <h4 class="text-base sm:text-lg font-black text-[#3A302A] mb-3 sm:mb-4 flex items-center gap-2">
                         🧑🏻 我的清單 (LoLo)
-                        <span class="text-xs bg-white text-[#A8201A] px-2 py-1 rounded-md border border-[#F5E6CC]">{{ checklistMe.filter(i=>i.done).length }}/{{ checklistMe.length }}</span>
+                        <span class="text-[10px] sm:text-xs bg-white text-[#A8201A] px-2 py-1 rounded-md border border-[#F5E6CC] ml-auto shadow-sm">{{ checklistMe.filter(i=>i.done).length }}/{{ checklistMe.length }}</span>
                     </h4>
-                    <div class="h-1 w-full bg-[#F5E6CC] rounded-full mb-5 overflow-hidden">
-                        <div class="h-full bg-[#F7B32B] transition-all" :style="{ width: (checklistMe.filter(i=>i.done).length / checklistMe.length * 100) + '%' }"></div>
+                    <div class="h-1.5 w-full bg-[#F5E6CC] rounded-full mb-4 sm:mb-5 overflow-hidden shadow-inner">
+                        <div class="h-full bg-[#F7B32B] transition-all duration-300" :style="{ width: (checklistMe.filter(i=>i.done).length / checklistMe.length * 100) + '%' }"></div>
                     </div>
-                    <ul class="space-y-4">
+                    <ul class="space-y-3 sm:space-y-4">
                         <li v-for="(item, idx) in checklistMe" :key="idx" class="flex items-start gap-3 cursor-pointer group" @click="toggleChecklist('Me', idx)">
-                            <div class="mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0" :class="item.done ? 'bg-[#F7B32B] border-[#F7B32B] shadow-inner scale-110' : 'border-[#D1C8B8] bg-white group-hover:border-[#F7B32B]'">
-                                <i v-if="item.done" class="fas fa-check text-white text-xs"></i>
+                            <div class="mt-0.5 w-5 h-5 sm:w-6 sm:h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0" :class="item.done ? 'bg-[#F7B32B] border-[#F7B32B] shadow-inner scale-110' : 'border-[#D1C8B8] bg-white group-hover:border-[#F7B32B]'">
+                                <i v-if="item.done" class="fas fa-check text-white text-[10px] sm:text-xs"></i>
                             </div>
-                            <span class="text-sm font-bold transition-all duration-200" :class="item.done ? 'text-[#B89B7E] line-through decoration-2 decoration-[#F7B32B]/50' : 'text-[#3A302A] group-hover:text-[#F7B32B]'">{{ item.text }}</span>
+                            <span class="text-xs sm:text-sm font-bold transition-all duration-200" :class="item.done ? 'text-[#B89B7E] line-through decoration-2 decoration-[#F7B32B]/50' : 'text-[#3A302A] group-hover:text-[#F7B32B]'">{{ item.text }}</span>
                         </li>
                     </ul>
                 </div>
 
-                <div class="bg-[#FFF9E6]/50 p-6 rounded-2xl border border-[#F5E6CC]">
-                    <h4 class="text-lg font-black text-[#3A302A] mb-4 flex items-center gap-2">
+                <div class="bg-[#FFF9E6]/50 p-4 sm:p-6 rounded-2xl border border-[#F5E6CC]">
+                    <h4 class="text-base sm:text-lg font-black text-[#3A302A] mb-3 sm:mb-4 flex items-center gap-2">
                         👶🏻 chanb 嘅清單
-                        <span class="text-xs bg-white text-[#A8201A] px-2 py-1 rounded-md border border-[#F5E6CC]">{{ checklistChanb.filter(i=>i.done).length }}/{{ checklistChanb.length }}</span>
+                        <span class="text-[10px] sm:text-xs bg-white text-[#A8201A] px-2 py-1 rounded-md border border-[#F5E6CC] ml-auto shadow-sm">{{ checklistChanb.filter(i=>i.done).length }}/{{ checklistChanb.length }}</span>
                     </h4>
-                    <div class="h-1 w-full bg-[#F5E6CC] rounded-full mb-5 overflow-hidden">
-                        <div class="h-full bg-[#A8201A] transition-all" :style="{ width: (checklistChanb.filter(i=>i.done).length / checklistChanb.length * 100) + '%' }"></div>
+                    <div class="h-1.5 w-full bg-[#F5E6CC] rounded-full mb-4 sm:mb-5 overflow-hidden shadow-inner">
+                        <div class="h-full bg-[#A8201A] transition-all duration-300" :style="{ width: (checklistChanb.filter(i=>i.done).length / checklistChanb.length * 100) + '%' }"></div>
                     </div>
-                    <ul class="space-y-4">
+                    <ul class="space-y-3 sm:space-y-4">
                         <li v-for="(item, idx) in checklistChanb" :key="idx" class="flex items-start gap-3 cursor-pointer group" @click="toggleChecklist('Chanb', idx)">
-                            <div class="mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0" :class="item.done ? 'bg-[#A8201A] border-[#A8201A] shadow-inner scale-110' : 'border-[#D1C8B8] bg-white group-hover:border-[#A8201A]'">
-                                <i v-if="item.done" class="fas fa-check text-white text-xs"></i>
+                            <div class="mt-0.5 w-5 h-5 sm:w-6 sm:h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0" :class="item.done ? 'bg-[#A8201A] border-[#A8201A] shadow-inner scale-110' : 'border-[#D1C8B8] bg-white group-hover:border-[#A8201A]'">
+                                <i v-if="item.done" class="fas fa-check text-white text-[10px] sm:text-xs"></i>
                             </div>
-                            <span class="text-sm font-bold transition-all duration-200" :class="item.done ? 'text-[#B89B7E] line-through decoration-2 decoration-[#A8201A]/50' : 'text-[#3A302A] group-hover:text-[#A8201A]'">{{ item.text }}</span>
+                            <span class="text-xs sm:text-sm font-bold transition-all duration-200" :class="item.done ? 'text-[#B89B7E] line-through decoration-2 decoration-[#A8201A]/50' : 'text-[#3A302A] group-hover:text-[#A8201A]'">{{ item.text }}</span>
                         </li>
                     </ul>
                 </div>
@@ -383,42 +405,42 @@ body::before {
 
 <transition name="fade">
 <div v-if="showAddModal" class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999]">
-    <div class="bg-white rounded-[2rem] w-full max-w-[380px] mx-4 p-8 shadow-2xl border-4 border-[#F7B32B] transform transition-all relative overflow-hidden">
+    <div class="bg-white rounded-[2rem] w-full max-w-[380px] mx-4 p-6 sm:p-8 shadow-2xl border-4 border-[#F7B32B] transform transition-all relative overflow-hidden">
         <div class="absolute top-0 right-0 w-24 h-24 bg-[#F7B32B] rounded-bl-full opacity-20 -mr-4 -mt-4"></div>
-        <h3 class="text-2xl font-black text-[#A8201A] mb-6 flex items-center gap-2 relative z-10"><i class="fas fa-plus-circle text-[#F7B32B]"></i> 記低使費</h3>
-        <div class="space-y-5 relative z-10">
+        <h3 class="text-xl sm:text-2xl font-black text-[#A8201A] mb-5 sm:mb-6 flex items-center gap-2 relative z-10"><i class="fas fa-plus-circle text-[#F7B32B]"></i> 記低使費</h3>
+        <div class="space-y-4 sm:space-y-5 relative z-10">
             <div>
-                <label class="block text-sm font-bold text-[#7D6B5D] mb-1">日期</label>
-                <input v-model="newRecord.date" type="date" class="w-full bg-[#FFF9E6] appearance-none box-border m-0 border-2 border-[#F5E6CC] focus:border-[#F7B32B] focus:bg-white focus:outline-none rounded-2xl px-4 py-3 text-base text-[#3A302A] font-bold transition-colors">
+                <label class="block text-xs sm:text-sm font-bold text-[#7D6B5D] mb-1">日期</label>
+                <input v-model="newRecord.date" type="date" class="w-full bg-[#FFF9E6] appearance-none box-border m-0 border-2 border-[#F5E6CC] focus:border-[#F7B32B] focus:bg-white focus:outline-none rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-base text-[#3A302A] font-bold transition-colors">
             </div>
             <div>
-                <label class="block text-sm font-bold text-[#7D6B5D] mb-1">項目名稱</label>
-                <input v-model="newRecord.description" placeholder="例如：夜市海鮮大餐" class="w-full bg-[#FFF9E6] border-2 border-[#F5E6CC] focus:border-[#F7B32B] focus:bg-white focus:outline-none rounded-2xl px-4 py-3 text-[#3A302A] font-bold transition-colors">
+                <label class="block text-xs sm:text-sm font-bold text-[#7D6B5D] mb-1">項目名稱</label>
+                <input v-model="newRecord.description" placeholder="例如：夜市海鮮大餐" class="w-full bg-[#FFF9E6] border-2 border-[#F5E6CC] focus:border-[#F7B32B] focus:bg-white focus:outline-none rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-base text-[#3A302A] font-bold transition-colors">
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                    <label class="block text-sm font-bold text-[#7D6B5D] mb-1">金額 (THB)</label>
-                    <input v-model="newRecord.amount" type="number" placeholder="0" class="w-full bg-[#FFF9E6] border-2 border-[#F5E6CC] focus:border-[#F7B32B] focus:bg-white focus:outline-none rounded-2xl px-4 py-3 text-[#3A302A] font-bold transition-colors">
+                    <label class="block text-xs sm:text-sm font-bold text-[#7D6B5D] mb-1">金額 (THB)</label>
+                    <input v-model="newRecord.amount" type="number" placeholder="0" class="w-full bg-[#FFF9E6] border-2 border-[#F5E6CC] focus:border-[#F7B32B] focus:bg-white focus:outline-none rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-base text-[#3A302A] font-bold transition-colors">
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-[#7D6B5D] mb-1">類別</label>
-                    <select v-model="newRecord.category" class="w-full bg-[#FFF9E6] border-2 border-[#F5E6CC] focus:border-[#F7B32B] focus:bg-white focus:outline-none rounded-2xl px-4 py-3 text-[#3A302A] font-bold transition-colors">
+                    <label class="block text-xs sm:text-sm font-bold text-[#7D6B5D] mb-1">類別</label>
+                    <select v-model="newRecord.category" class="w-full bg-[#FFF9E6] border-2 border-[#F5E6CC] focus:border-[#F7B32B] focus:bg-white focus:outline-none rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-base text-[#3A302A] font-bold transition-colors">
                         <option value="食物">食物 🍔</option><option value="交通">交通 🚕</option><option value="入油">入油 ⛽</option>
                         <option value="住宿">住宿 🏨</option><option value="娛樂">娛樂 🎢</option><option value="購物">購物 🛍️</option><option value="其他">其他 📦</option>
                     </select>
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-bold text-[#7D6B5D] mb-1">支付方式</label>
-                <select v-model="newRecord.paymentMethod" class="w-full bg-[#FFF9E6] border-2 border-[#F5E6CC] focus:border-[#F7B32B] focus:bg-white focus:outline-none rounded-2xl px-4 py-3 text-[#3A302A] font-bold transition-colors">
+                <label class="block text-xs sm:text-sm font-bold text-[#7D6B5D] mb-1">支付方式</label>
+                <select v-model="newRecord.paymentMethod" class="w-full bg-[#FFF9E6] border-2 border-[#F5E6CC] focus:border-[#F7B32B] focus:bg-white focus:outline-none rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-base text-[#3A302A] font-bold transition-colors">
                     <option value="現金">現金 💵</option><option value="信用卡">信用卡 💳</option><option value="Alipay">Alipay</option>
                     <option value="WeChat Pay">WeChat Pay</option><option value="其他">其他</option>
                 </select>
             </div>
         </div>
-        <div class="flex gap-4 mt-8 relative z-10">
-            <button @click="showAddModal = false" class="flex-1 py-3.5 text-[#A8201A] font-black border-2 border-[#F5E6CC] bg-white rounded-2xl hover:bg-[#FFF9E6] active:scale-95 transition-all">取消</button>
-            <button @click="addExpense" class="flex-1 py-3.5 bg-[#F7B32B] hover:bg-[#F9A03F] text-white font-black rounded-2xl shadow-lg active:scale-95 transition-all">確定新增</button>
+        <div class="flex gap-3 sm:gap-4 mt-6 sm:mt-8 relative z-10">
+            <button @click="showAddModal = false" class="flex-1 py-3 text-[#A8201A] font-black border-2 border-[#F5E6CC] bg-white rounded-2xl hover:bg-[#FFF9E6] active:scale-95 transition-all text-sm sm:text-base">取消</button>
+            <button @click="addExpense" class="flex-1 py-3 bg-[#F7B32B] hover:bg-[#F9A03F] text-white font-black rounded-2xl shadow-lg active:scale-95 transition-all text-sm sm:text-base">確定新增</button>
         </div>
     </div>
 </div>
@@ -426,43 +448,43 @@ body::before {
 
 <transition name="fade">
 <div v-if="showBudgetModal" class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999]">
-    <div class="bg-white rounded-[2rem] w-full max-w-[380px] mx-4 p-8 shadow-2xl border-4 border-[#A8201A] relative overflow-hidden">
-        <h3 class="text-2xl font-black text-[#A8201A] mb-6 flex items-center gap-2"><i class="fas fa-bullseye text-[#F7B32B]"></i> 設定總預算</h3>
+    <div class="bg-white rounded-[2rem] w-full max-w-[380px] mx-4 p-6 sm:p-8 shadow-2xl border-4 border-[#A8201A] relative overflow-hidden">
+        <h3 class="text-xl sm:text-2xl font-black text-[#A8201A] mb-5 sm:mb-6 flex items-center gap-2"><i class="fas fa-bullseye text-[#F7B32B]"></i> 設定總預算</h3>
         <div class="space-y-6">
             <div>
-                <label class="block text-sm font-bold text-[#7D6B5D] mb-2 text-center">總預算（HKD）</label>
-                <input v-model="tempBudget" type="number" placeholder="例如 25000" class="w-full bg-[#FFF9E6] text-5xl font-black text-center border-2 border-[#F5E6CC] rounded-3xl px-6 py-6 focus:outline-none focus:border-[#F7B32B] text-[#A8201A] transition-colors">
+                <label class="block text-xs sm:text-sm font-bold text-[#7D6B5D] mb-2 text-center">總預算（HKD）</label>
+                <input v-model="tempBudget" type="number" placeholder="例如 25000" class="w-full bg-[#FFF9E6] text-4xl sm:text-5xl font-black text-center border-2 border-[#F5E6CC] rounded-3xl px-4 py-5 sm:px-6 sm:py-6 focus:outline-none focus:border-[#F7B32B] text-[#A8201A] transition-colors">
             </div>
         </div>
-        <div class="flex gap-4 mt-8">
-            <button @click="showBudgetModal = false" class="flex-1 py-3.5 text-[#3A302A] font-black border-2 border-[#F5E6CC] rounded-2xl hover:bg-[#FFF9E6] active:scale-95 transition-all">取消</button>
-            <button @click="saveBudget" class="flex-1 py-3.5 bg-[#A8201A] hover:bg-[#8A1914] text-white font-black rounded-2xl shadow-lg active:scale-95 transition-all">儲存預算</button>
+        <div class="flex gap-3 sm:gap-4 mt-6 sm:mt-8">
+            <button @click="showBudgetModal = false" class="flex-1 py-3 text-[#3A302A] font-black border-2 border-[#F5E6CC] rounded-2xl hover:bg-[#FFF9E6] active:scale-95 transition-all text-sm sm:text-base">取消</button>
+            <button @click="saveBudget" class="flex-1 py-3 bg-[#A8201A] hover:bg-[#8A1914] text-white font-black rounded-2xl shadow-lg active:scale-95 transition-all text-sm sm:text-base">儲存預算</button>
         </div>
-        <button @click="clearBudget" class="text-sm font-bold text-[#B89B7E] hover:text-[#A8201A] mt-6 w-full transition-colors underline underline-offset-4">清除預算設定</button>
+        <button @click="clearBudget" class="text-xs sm:text-sm font-bold text-[#B89B7E] hover:text-[#A8201A] mt-5 sm:mt-6 w-full transition-colors underline underline-offset-4">清除預算設定</button>
     </div>
 </div>
 </transition>
 
 <transition name="fade">
 <div v-if="showRateModal" class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999]">
-    <div class="bg-white rounded-[2rem] w-full max-w-[380px] mx-4 p-8 shadow-2xl border-4 border-[#F7B32B] relative">
-        <h3 class="text-2xl font-black text-[#A8201A] mb-6 flex items-center gap-2"><i class="fas fa-coins text-[#F7B32B]"></i> 自訂兌換率</h3>
+    <div class="bg-white rounded-[2rem] w-full max-w-[380px] mx-4 p-6 sm:p-8 shadow-2xl border-4 border-[#F7B32B] relative">
+        <h3 class="text-xl sm:text-2xl font-black text-[#A8201A] mb-5 sm:mb-6 flex items-center gap-2"><i class="fas fa-coins text-[#F7B32B]"></i> 自訂兌換率</h3>
         <div class="space-y-6">
-            <div class="flex items-center justify-center gap-6 text-3xl bg-[#FFF9E6] p-6 rounded-3xl border-2 border-[#F5E6CC]">
-                <div class="text-center font-black text-[#3A302A]"><span class="text-4xl">🇭🇰</span><br>1</div>
-                <div class="text-[#F7B32B] text-4xl">=</div>
+            <div class="flex items-center justify-center gap-4 sm:gap-6 text-2xl sm:text-3xl bg-[#FFF9E6] p-5 sm:p-6 rounded-3xl border-2 border-[#F5E6CC]">
+                <div class="text-center font-black text-[#3A302A]"><span class="text-3xl sm:text-4xl">🇭🇰</span><br>1</div>
+                <div class="text-[#F7B32B] text-3xl sm:text-4xl">=</div>
                 <div class="flex-1">
-                    <input v-model="tempRate" type="number" step="0.0001" class="w-full bg-white text-center text-3xl font-black border-2 border-[#F5E6CC] rounded-2xl px-2 py-3 focus:outline-none focus:border-[#F7B32B] text-[#A8201A] shadow-inner transition-colors">
-                    <div class="text-center font-bold text-[#7D6B5D] mt-2 text-sm">泰銖 ฿</div>
+                    <input v-model="tempRate" type="number" step="0.0001" class="w-full bg-white text-center text-2xl sm:text-3xl font-black border-2 border-[#F5E6CC] rounded-2xl px-2 py-3 focus:outline-none focus:border-[#F7B32B] text-[#A8201A] shadow-inner transition-colors">
+                    <div class="text-center font-bold text-[#7D6B5D] mt-2 text-xs sm:text-sm">泰銖 ฿</div>
                 </div>
             </div>
-            <p class="text-xs text-center font-bold text-[#A8201A] bg-red-50 py-2 rounded-xl">注意：自訂匯率會覆蓋系統自動實時匯率</p>
+            <p class="text-[11px] sm:text-xs text-center font-bold text-[#A8201A] bg-red-50 py-2 rounded-xl px-2">注意：自訂匯率會覆蓋系統自動實時匯率</p>
         </div>
-        <div class="flex gap-4 mt-8">
-            <button @click="showRateModal = false" class="flex-1 py-3.5 text-[#3A302A] font-black border-2 border-[#F5E6CC] rounded-2xl hover:bg-[#FFF9E6] active:scale-95 transition-all">取消</button>
-            <button @click="saveCustomRate" class="flex-1 py-3.5 bg-[#F7B32B] hover:bg-[#F9A03F] text-white font-black rounded-2xl shadow-lg active:scale-95 transition-all">儲存匯率</button>
+        <div class="flex gap-3 sm:gap-4 mt-6 sm:mt-8">
+            <button @click="showRateModal = false" class="flex-1 py-3 text-[#3A302A] font-black border-2 border-[#F5E6CC] rounded-2xl hover:bg-[#FFF9E6] active:scale-95 transition-all text-sm sm:text-base">取消</button>
+            <button @click="saveCustomRate" class="flex-1 py-3 bg-[#F7B32B] hover:bg-[#F9A03F] text-white font-black rounded-2xl shadow-lg active:scale-95 transition-all text-sm sm:text-base">儲存匯率</button>
         </div>
-        <button @click="clearCustomRate" class="text-sm font-bold text-[#B89B7E] hover:text-[#A8201A] mt-6 w-full transition-colors underline underline-offset-4">恢復自動匯率</button>
+        <button @click="clearCustomRate" class="text-xs sm:text-sm font-bold text-[#B89B7E] hover:text-[#A8201A] mt-5 sm:mt-6 w-full transition-colors underline underline-offset-4">恢復自動匯率</button>
     </div>
 </div>
 </transition>
@@ -490,43 +512,42 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 分類及簡化後的專屬 Checklist
+// 升級版行李 Checklist：刪除國際車牌、加入容易遺忘嘅項目、細節優化
 const defaultChecklistMe = [
-    { text: '護照 + 身份證', done: false },
-    { text: '機票 + 酒店預訂單 + 保險單', done: false },
-    { text: '泰國車牌 (考到後)', done: false },
-    { text: '現金 (THB/HKD) + 信用卡', done: false },
-    { text: '電話 + 充電線 + 轉插 + 尿袋', done: false },
-    { text: '速乾T恤 x6 + 長褲 x2 + 短褲 x3', done: false },
-    { text: '內衣褲 + 襪 x10', done: false },
-    { text: '防曬 / 防風薄外套', done: false },
-    { text: '泳褲 + 拖鞋 + 行山波鞋', done: false },
+    { text: '護照 + 泰國簽證(如需) + 香港身份證', done: false },
+    { text: '旅行保險單 (包電單車意外！極重要)', done: false },
+    { text: '機票 + 酒店預訂單 (The Quarter/Proud Phu Fah)', done: false },
+    { text: '現金 (THB+HKD) + 信用卡 (記得開海外簽帳)', done: false },
+    { text: '電話 + 泰國 SIM/eSIM + 尿袋(大容量)', done: false },
+    { text: '充電線 x2 + 轉插 (泰國可直插Type A/C)', done: false },
+    { text: '速乾T恤/運動衫 x6 + 長褲 x2 (保護雙腿)', done: false },
+    { text: '短褲 x3 (布吉用) + 內衣褲/襪 x10', done: false },
+    { text: '防曬/防風薄外套 (山上早晚涼)', done: false },
+    { text: '行山波鞋 (黏黏瀑布) + 拖鞋 + 泳褲', done: false },
     { text: '兩套雨衣 (全罩) + 防水背包套', done: false },
-    { text: '全罩頭盔 + 騎行手套', done: false },
+    { text: '全罩頭盔 + 騎行手套 + 防曬袖套', done: false },
     { text: '車鎖 + 頭盔鎖', done: false },
-    { text: '太陽眼鏡 + 防曬袖套', done: false },
-    { text: 'GoPro / 相機 + 耳機', done: false },
-    { text: '防蚊水 + 搓手液 + 濕紙巾', done: false },
-    { text: '常備藥 (腸胃/止痛/暈車/膠布)', done: false },
-    { text: '洗漱用品 + 毛巾 + 水樽', done: false }
+    { text: '太陽眼鏡 + GoPro/相機 + 耳機', done: false },
+    { text: '常備藥 (腸胃/止痛/暈浪丸/膠布/蚊水)', done: false },
+    { text: '洗漱用品 + 隱形眼鏡/眼藥水 + 濕紙巾', done: false }
 ];
 
 const defaultChecklistChanb = [
-    { text: '護照 + 身份證', done: false },
-    { text: '旅行保險單 (包電單車)', done: false },
-    { text: '現金 + 信用卡 + App', done: false },
-    { text: '電話 + 充電線 + 尿袋', done: false },
-    { text: '打卡衫裙 + 長短褲', done: false },
-    { text: '內衣褲 + 襪 x10', done: false },
-    { text: '防曬 / 防風薄外套', done: false },
-    { text: '泳衣 x2 + 拖鞋 + 波鞋', done: false },
+    { text: '護照 + 泰國簽證(如需) + 香港身份證', done: false },
+    { text: '旅行保險單 (包電單車意外！極重要)', done: false },
+    { text: '現金 + 信用卡 (綁定好 Grab/Bolt App)', done: false },
+    { text: '電話 + 泰國 SIM/eSIM + 尿袋', done: false },
+    { text: '充電線 + 轉插 + 輕便日用背包', done: false },
+    { text: '打卡靚衫/裙 + 長短褲 (防曬/防蚊)', done: false },
+    { text: '內衣褲/襪 x10 + 防風薄外套/冷衫', done: false },
+    { text: '舒服行路波鞋 + 拖鞋/涼鞋', done: false },
+    { text: '泳衣 x2 + 速乾毛巾', done: false },
     { text: '全罩頭盔', done: false },
     { text: '太陽眼鏡 + 太陽帽 + 防曬袖套', done: false },
-    { text: '防曬霜 (SPF50+) + 護膚化妝品', done: false },
-    { text: '直髮夾 / 捲髮器', done: false },
-    { text: '女性用品 + 速乾毛巾', done: false },
-    { text: '耳機 + 輕便日用背包', done: false },
-    { text: '摺傘 + 環保水樽', done: false }
+    { text: '防曬霜(SPF50+防水) + 卸妝/護膚化妝品', done: false },
+    { text: '直髮夾 / 捲髮器 (注意泰國220V電壓)', done: false },
+    { text: '女性用品 + 隱形眼鏡/眼藥水', done: false },
+    { text: '摺傘 + 環保水樽 + 消毒搓手液/紙巾', done: false }
 ];
 
 const { createApp } = Vue;
@@ -579,7 +600,6 @@ computed: {
 watch: {
     currentTab(newTab) {
         if (newTab === 'accounting') {
-            // 加入 450ms 延遲，確保 <transition> 動畫完全播完、<canvas> 出現後先開始畫圖！
             setTimeout(() => { 
                 this.updateExpenseChart(); 
                 this.updateExpenseLineChart(); 
@@ -654,10 +674,10 @@ methods: {
             data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderColor: '#ffffff', borderWidth: 4, hoverOffset: 8 }] },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 cutout: '60%',
                 plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 14, padding: 15, font: { size: 14, family: "'Noto Sans TC', sans-serif", weight: 'bold' }, usePointStyle: true, color: '#3A302A' } },
+                    legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 12, family: "'Noto Sans TC', sans-serif", weight: 'bold' }, usePointStyle: true, color: '#3A302A' } },
                     tooltip: { callbacks: { label: ctx => ' ' + ctx.raw + ' THB' }, titleFont: {size: 14}, bodyFont: {size: 14, weight: 'bold'} }
                 }
             }
@@ -685,10 +705,10 @@ methods: {
                     data: dataValues,
                     borderColor: '#F7B32B',
                     backgroundColor: 'rgba(247, 179, 43, 0.15)',
-                    borderWidth: 4,
+                    borderWidth: 3,
                     tension: 0.4,
                     fill: true,
-                    pointRadius: 5,
+                    pointRadius: 4,
                     pointBackgroundColor: '#A8201A',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2
@@ -696,7 +716,7 @@ methods: {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
                     tooltip: { callbacks: { title: (tooltipItems) => sortedDates[tooltipItems[0].dataIndex], label: ctx => ctx.raw + ' THB' } }
