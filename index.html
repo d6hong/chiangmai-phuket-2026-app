@@ -159,7 +159,7 @@
                 </div>
             </div>
 
-            <!-- 支出統計圖表（鮮明對比顏色） -->
+            <!-- 支出統計圖表（統一鮮明顏色 + 純文字 legend） -->
             <div class="bg-white rounded-3xl p-6 shadow-sm">
                 <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-emerald-800">
                     <i class="fas fa-chart-pie"></i> 支出統計（按類別）
@@ -173,7 +173,7 @@
                 </div>
             </div>
 
-            <!-- 完整支出歷史紀錄列表（類別已加上對應鮮明顏色） -->
+            <!-- 完整支出歷史紀錄列表（類別標籤已用統一顏色） -->
             <div class="space-y-3">
                 <div v-for="expense in expenses" :key="expense.id" 
                      class="bg-white rounded-3xl p-5 flex justify-between items-center shadow-sm">
@@ -261,13 +261,13 @@
                         <div>
                             <label class="block text-sm text-emerald-600 mb-1">類別</label>
                             <select v-model="newRecord.category" class="w-full border border-emerald-200 rounded-3xl px-4 py-3">
-                                <option value="食物">🍔 食物</option>
-                                <option value="交通">🚕 交通</option>
-                                <option value="入油">⛽ 入油</option>
-                                <option value="住宿">🏨 住宿</option>
-                                <option value="娛樂">🎟️ 娛樂</option>
-                                <option value="購物">🛍️ 購物</option>
-                                <option value="其他">❓ 其他</option>
+                                <option value="食物">食物</option>
+                                <option value="交通">交通</option>
+                                <option value="入油">入油</option>
+                                <option value="住宿">住宿</option>
+                                <option value="娛樂">娛樂</option>
+                                <option value="購物">購物</option>
+                                <option value="其他">其他</option>
                             </select>
                         </div>
                     </div>
@@ -539,13 +539,13 @@
                 selectDay(index) { this.selectedDayIndex = index; },
                 getCategoryColor(category) {
                     const colorMap = {
-                        '食物': '#FF6384',
-                        '交通': '#36A2EB',
-                        '入油': '#FFCE56',
-                        '住宿': '#4BC0C0',
-                        '娛樂': '#9966FF',
-                        '購物': '#FF9F40',
-                        '其他': '#C9CBCF'
+                        '食物': '#FF9F40',   // 橙
+                        '交通': '#36A2EB',   // 青
+                        '入油': '#FFCE56',   // 黃
+                        '住宿': '#4BC0C0',   // 青/藍
+                        '娛樂': '#9966FF',   // 紫
+                        '購物': '#FF6384',   // 粉紅
+                        '其他': '#C9CBCF'    // 灰
                     };
                     return colorMap[category] || '#10b981';
                 },
@@ -600,21 +600,10 @@
                         categoryTotals[cat] = (categoryTotals[cat] || 0) + (parseFloat(exp.amount) || 0);
                     });
 
-                    const labels = Object.keys(categoryTotals).map(cat => {
-                        const emojiMap = {
-                            '食物': '🍔 食物',
-                            '交通': '🚕 交通',
-                            '入油': '⛽ 入油',
-                            '住宿': '🏨 住宿',
-                            '娛樂': '🎟️ 娛樂',
-                            '購物': '🛍️ 購物',
-                            '其他': '❓ 其他'
-                        };
-                        return emojiMap[cat] || cat;
-                    });
+                    const labels = Object.keys(categoryTotals);   // ← 只用純文字，移除 emoji
                     const data = Object.values(categoryTotals);
-                    // 鮮明對比顏色（無綠色主調）
-                    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF'];
+                    // 統一鮮明對比顏色（按你指定的順序）
+                    const colors = ['#FF9F40', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF6384', '#C9CBCF'];
 
                     this.expenseChart = new Chart(canvas, {
                         type: 'pie',
@@ -631,7 +620,15 @@
                             responsive: true,
                             maintainAspectRatio: true,
                             plugins: {
-                                legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 13 } } },
+                                legend: { 
+                                    position: 'bottom', 
+                                    labels: { 
+                                        boxWidth: 12, 
+                                        padding: 15, 
+                                        font: { size: 13 },
+                                        usePointStyle: true
+                                    } 
+                                },
                                 tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.raw + ' THB' } }
                             }
                         }
