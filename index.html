@@ -47,7 +47,7 @@
                 </div>
             </div>
             
-            <!-- 右上角自定義匯率 -->
+            <!-- 右上角自定義匯率（已支援 Firebase 同步） -->
             <div @click="openRateModal" 
                  class="text-right cursor-pointer hover:bg-white/10 px-4 py-2 rounded-3xl transition-colors">
                 <div class="text-xs bg-white/20 px-4 py-1 rounded-3xl flex items-center gap-1">
@@ -173,7 +173,7 @@
                 </div>
             </div>
 
-            <!-- 總支出 + 預算卡片 -->
+            <!-- 總支出 + 預算卡片（已支援 Firebase 同步） -->
             <div class="bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-3xl p-8 text-center">
                 <div class="flex justify-between items-center mb-4">
                     <div class="text-emerald-600 text-sm">總支出</div>
@@ -620,7 +620,7 @@
                     this.showAddModal = false;
                     this.newRecord = { date: new Date().toISOString().slice(0,10), description: '', amount: 0, category: '食物', paymentMethod: '現金' };
 
-                    // 強制即時更新兩個圖表（使用 $nextTick 確保 DOM 已更新）
+                    // 強制即時更新兩個圖表
                     this.$nextTick(() => {
                         this.updateExpenseChart();
                         this.updateExpenseLineChart();
@@ -688,7 +688,7 @@
                     });
 
                     const sortedDates = Object.keys(dateTotals).sort();
-                    const displayLabels = sortedDates.map(date => date.split('-')[2]);  // 只顯示 dd (例如 "10")
+                    const displayLabels = sortedDates.map(date => date.split('-')[2]);   // 只顯示 dd
                     const dataValues = sortedDates.map(date => dateTotals[date]);
 
                     this.expenseLineChart = new Chart(canvas, {
@@ -713,7 +713,7 @@
                                 legend: { display: false }, 
                                 tooltip: { 
                                     callbacks: { 
-                                        title: (tooltipItems) => sortedDates[tooltipItems[0].dataIndex],  // tooltip 顯示完整日期
+                                        title: (tooltipItems) => sortedDates[tooltipItems[0].dataIndex], 
                                         label: ctx => ctx.raw + ' THB' 
                                     } 
                                 } 
@@ -736,15 +736,15 @@
                 },
                 saveCustomRate() {
                     this.customRate = parseFloat(this.tempRate);
-                    localStorage.setItem('chanbCustomRate', this.customRate);
+                    db.ref('settings/customRate').set(this.customRate);   // Firebase 同步
                     this.showRateModal = false;
                     this.updateExpenseChart();
                     this.updateExpenseLineChart();
-                    alert('✅ 自訂匯率已儲存並套用到所有旅費計算！下次打開網站會自動載入。');
+                    alert('✅ 自訂匯率已儲存並同步到雲端！所有裝置即時更新。');
                 },
                 clearCustomRate() {
                     this.customRate = null;
-                    localStorage.removeItem('chanbCustomRate');
+                    db.ref('settings/customRate').set(null);
                     this.showRateModal = false;
                     this.updateExpenseChart();
                     this.updateExpenseLineChart();
@@ -752,13 +752,13 @@
                 },
                 saveBudget() {
                     this.totalBudget = parseFloat(this.tempBudget);
-                    localStorage.setItem('chanbTotalBudget', this.totalBudget);
+                    db.ref('settings/budget').set(this.totalBudget);   // Firebase 同步
                     this.showBudgetModal = false;
-                    alert('✅ 總預算已儲存！');
+                    alert('✅ 總預算已儲存並同步到雲端！所有裝置即時更新。');
                 },
                 clearBudget() {
                     this.totalBudget = null;
-                    localStorage.removeItem('chanbTotalBudget');
+                    db.ref('settings/budget').set(null);
                     this.showBudgetModal = false;
                     alert('已清除預算設定');
                 }
@@ -767,11 +767,15 @@
                 this.loadExpenses();
                 this.fetchRates();
 
-                const savedRate = localStorage.getItem('chanbCustomRate');
-                if (savedRate) this.customRate = parseFloat(savedRate);
+                // Firebase 即時監聽自定義匯率
+                db.ref('settings/customRate').on('value', snapshot => {
+                    this.customRate = snapshot.val();
+                });
 
-                const savedBudget = localStorage.getItem('chanbTotalBudget');
-                if (savedBudget) this.totalBudget = parseFloat(savedBudget);
+                // Firebase 即時監聽總預算
+                db.ref('settings/budget').on('value', snapshot => {
+                    this.totalBudget = snapshot.val();
+                });
             }
         }).mount('#app')
     </script>
