@@ -161,18 +161,59 @@
                 <h2 class="text-2xl font-semibold text-emerald-800 flex items-center gap-2">
                     <i class="fas fa-receipt"></i> 旅費管理
                 </h2>
-                <button @click="openAddModal" 
-                        class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-3xl flex items-center gap-2 text-sm font-medium shadow-lg active:scale-95">
-                    <i class="fas fa-plus"></i> 新增支出
-                </button>
+                <div class="flex gap-2">
+                    <button @click="openAddModal" 
+                            class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-3xl flex items-center gap-2 text-sm font-medium shadow-lg active:scale-95">
+                        <i class="fas fa-plus"></i> 新增支出
+                    </button>
+                    <button @click="openBudgetModal" 
+                            class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-3xl flex items-center gap-2 text-sm font-medium shadow-lg active:scale-95">
+                        <i class="fas fa-wallet"></i> 設定預算
+                    </button>
+                </div>
             </div>
 
-            <!-- 總支出卡片 -->
+            <!-- 總支出 + 預算卡片（已加入預算顯示） -->
             <div class="bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-3xl p-8 text-center">
-                <div class="text-emerald-600 text-sm">總支出</div>
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-emerald-600 text-sm">總支出</div>
+                    <div v-if="totalBudget" class="text-xs font-medium px-4 py-1 rounded-3xl"
+                         :class="{ 
+                             'bg-emerald-200 text-emerald-700': usagePercent < 80,
+                             'bg-amber-200 text-amber-700': usagePercent >= 80 && usagePercent < 100,
+                             'bg-red-200 text-red-700': usagePercent >= 100 
+                         }">
+                        {{ usagePercent.toFixed(0) }}% 已用
+                    </div>
+                </div>
+                
                 <div class="text-5xl font-bold text-emerald-800">{{ totalHKD.toLocaleString() }} HKD</div>
                 <div class="text-emerald-700 text-xl flex items-center justify-center gap-2 mt-1">
                     ≈ <span>{{ totalTHB.toLocaleString() }} ฿</span>
+                </div>
+
+                <!-- 預算進度條 -->
+                <div v-if="totalBudget" class="mt-6">
+                    <div class="flex justify-between text-xs mb-1 text-emerald-600">
+                        <span>已用</span>
+                        <span>剩餘 {{ remainingBudget.toLocaleString() }} HKD</span>
+                    </div>
+                    <div class="h-3 bg-white rounded-3xl overflow-hidden">
+                        <div class="h-full transition-all"
+                             :class="{ 
+                                 'bg-emerald-500': usagePercent < 80,
+                                 'bg-amber-500': usagePercent >= 80 && usagePercent < 100,
+                                 'bg-red-500': usagePercent >= 100 
+                             }"
+                             :style="{ width: Math.min(usagePercent, 100) + '%' }"></div>
+                    </div>
+                    <div class="text-xs text-emerald-500 mt-1">
+                        總預算：{{ totalBudget.toLocaleString() }} HKD
+                    </div>
+                </div>
+                
+                <div v-else class="mt-4 text-sm text-emerald-500 flex items-center justify-center gap-1">
+                    <i class="fas fa-info-circle"></i> 尚未設定總預算
                 </div>
             </div>
 
@@ -420,6 +461,28 @@
             </div>
         </div>
 
+        <!-- 設定預算 Modal -->
+        <div v-if="showBudgetModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
+            <div class="bg-white rounded-3xl w-full max-w-[380px] mx-4 p-6 shadow-2xl">
+                <h3 class="text-2xl font-semibold text-emerald-800 mb-6 flex items-center gap-2">
+                    <i class="fas fa-wallet"></i> 設定總預算
+                </h3>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm text-emerald-600 mb-2">總預算（HKD）</label>
+                        <input v-model="tempBudget" type="number" placeholder="例如 25000" 
+                               class="w-full text-4xl font-bold text-center border border-emerald-200 rounded-3xl px-6 py-5 focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <p class="text-xs text-center text-emerald-600">設定整個旅程的總預算，系統會自動計算剩餘金額同百分比</p>
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button @click="showBudgetModal = false" class="flex-1 py-4 text-emerald-700 font-medium border border-emerald-200 rounded-3xl">取消</button>
+                    <button @click="saveBudget" class="flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-3xl">儲存預算</button>
+                </div>
+                <button @click="clearBudget" class="text-xs text-red-400 mt-4 w-full">清除預算設定</button>
+            </div>
+        </div>
+
         <!-- 自訂匯率 Modal -->
         <div v-if="showRateModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
             <div class="bg-white rounded-3xl w-full max-w-[380px] mx-4 p-6 shadow-2xl">
@@ -471,10 +534,13 @@
                     selectedDayIndex: 0,
                     showAddModal: false,
                     showRateModal: false,
+                    showBudgetModal: false,
                     expenses: [],
                     rates: { THB: 4.17 },
                     customRate: null,
+                    totalBudget: null,
                     tempRate: 4.17,
+                    tempBudget: 25000,
                     lastUpdateTime: '',
                     newRecord: {
                         date: new Date().toISOString().slice(0,10),
@@ -508,7 +574,15 @@
                 selectedDay() { return this.days[this.selectedDayIndex]; },
                 currentRate() { return this.customRate || this.rates.THB || 4.17; },
                 totalTHB() { return this.expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0); },
-                totalHKD() { return Math.round(this.totalTHB / this.currentRate); }
+                totalHKD() { return Math.round(this.totalTHB / this.currentRate); },
+                usagePercent() {
+                    if (!this.totalBudget) return 0;
+                    return Math.min((this.totalHKD / this.totalBudget) * 100, 100);
+                },
+                remainingBudget() {
+                    if (!this.totalBudget) return 0;
+                    return Math.max(this.totalBudget - this.totalHKD, 0);
+                }
             },
             watch: {
                 currentTab(newTab) {
@@ -527,6 +601,10 @@
                 selectDay(index) { this.selectedDayIndex = index; },
                 openAddModal() { this.showAddModal = true; },
                 openRateModal() { this.showRateModal = true; },
+                openBudgetModal() { 
+                    this.tempBudget = this.totalBudget || 25000; 
+                    this.showBudgetModal = true; 
+                },
                 getCategoryColor(category) {
                     const colorMap = { '食物': '#FF6384', '交通': '#36A2EB', '入油': '#FFCE56', '住宿': '#4BC0C0', '娛樂': '#9966FF', '購物': '#FF9F40', '其他': '#C9CBCF' };
                     return colorMap[category] || '#C9CBCF';
@@ -537,31 +615,19 @@
                         return; 
                     }
                     const newExpense = { id: Date.now(), ...this.newRecord };
-                    this.expenses.unshift(newExpense);           // 先本地即時顯示
-                    db.ref('expenses').push(newExpense);         // 同步到 Firebase
-
+                    this.expenses.unshift(newExpense);
+                    db.ref('expenses').push(newExpense);
                     this.showAddModal = false;
-                    this.newRecord = { 
-                        date: new Date().toISOString().slice(0,10), 
-                        description: '', 
-                        amount: 0, 
-                        category: '食物', 
-                        paymentMethod: '現金' 
-                    };
-
-                    // === 關鍵：立即更新兩個圖表，無需重新整理 ===
+                    this.newRecord = { date: new Date().toISOString().slice(0,10), description: '', amount: 0, category: '食物', paymentMethod: '現金' };
                     this.updateExpenseChart();
                     this.updateExpenseLineChart();
-
-                    alert('✅ 已即時更新圖表並同步到雲端！其他裝置會即時看到最新紀錄同圖表。');
+                    alert('✅ 已即時更新圖表及預算顯示，並同步到雲端！');
                 },
                 deleteExpense(id) {
                     if (confirm('確定刪除呢筆支出？')) {
                         this.expenses = this.expenses.filter(e => e.id !== id);
                         db.ref('expenses').once('value', snapshot => {
-                            snapshot.forEach(child => { 
-                                if (child.val().id === id) child.ref.remove(); 
-                            });
+                            snapshot.forEach(child => { if (child.val().id === id) child.ref.remove(); });
                         });
                         this.updateExpenseChart();
                         this.updateExpenseLineChart();
@@ -665,14 +731,31 @@
                     this.updateExpenseChart();
                     this.updateExpenseLineChart();
                     alert('已清除自訂匯率，恢復使用 exchangerate.host 自動匯率');
+                },
+                saveBudget() {
+                    this.totalBudget = parseFloat(this.tempBudget);
+                    localStorage.setItem('chanbTotalBudget', this.totalBudget);
+                    this.showBudgetModal = false;
+                    alert('✅ 總預算已儲存！');
+                },
+                clearBudget() {
+                    this.totalBudget = null;
+                    localStorage.removeItem('chanbTotalBudget');
+                    this.showBudgetModal = false;
+                    alert('已清除預算設定');
                 }
             },
             mounted() {
                 this.loadExpenses();
                 this.fetchRates();
 
+                // 讀取上次自定義匯率
                 const savedRate = localStorage.getItem('chanbCustomRate');
                 if (savedRate) this.customRate = parseFloat(savedRate);
+
+                // 讀取上次總預算
+                const savedBudget = localStorage.getItem('chanbTotalBudget');
+                if (savedBudget) this.totalBudget = parseFloat(savedBudget);
             }
         }).mount('#app')
     </script>
