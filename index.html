@@ -155,7 +155,7 @@
                 </div>
             </div>
 
-            <!-- 支出列表 -->
+            <!-- 支出歷史紀錄列表 -->
             <div v-for="expense in expenses" :key="expense.id" 
                  class="bg-white rounded-3xl p-5 flex justify-between items-center shadow-sm">
                 <div class="flex-1">
@@ -177,8 +177,8 @@
 
             <div v-if="expenses.length === 0" class="text-center py-12 text-emerald-400">
                 <i class="fas fa-receipt text-6xl mb-4 opacity-30"></i>
-                <p>仲未有任何支出～</p>
-                <p class="text-sm">快啲撳上面「新增支出」試下啦！</p>
+                <p>仲未有任何支出紀錄～</p>
+                <p class="text-sm">快啲新增第一筆啦！</p>
             </div>
         </div>
 
@@ -208,7 +208,7 @@
             </div>
         </div>
 
-        <!-- 新增支出 Modal（完全在 #app 內） -->
+        <!-- 新增支出 Modal -->
         <div v-if="showAddModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
             <div class="bg-white rounded-3xl w-full max-w-md mx-4 p-6 shadow-2xl">
                 <h3 class="text-2xl font-semibold text-emerald-800 mb-6 flex items-center gap-2">
@@ -481,6 +481,7 @@
                         category: '食物',
                         paymentMethod: '現金'
                     };
+                    alert('✅ 已保存並同步到雲端！其他裝置會即時更新。');
                 },
                 deleteExpense(id) {
                     if (confirm('確定刪除呢筆支出？')) {
