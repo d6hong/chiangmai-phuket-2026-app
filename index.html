@@ -20,30 +20,21 @@ body {
     background-attachment: fixed;
     position: relative;
 }
-/* 溫柔奶油色背景覆蓋 */
 body::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(255, 249, 230, 0.96); /* 奶油色 #FFF9E6 */
+    background: rgba(255, 249, 230, 0.96);
     z-index: -1;
 }
 .day-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .day-card:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 15px -3px rgba(247, 179, 43, 0.2); }
-/* 姜黃色選中狀態 */
 .selected { background-color: #F7B32B !important; color: white !important; border: 3px solid #F7B32B; box-shadow: 0 4px 14px rgba(247, 179, 43, 0.4); }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .countdown-card { background: linear-gradient(135deg, #FFFFFF, #FFF2D1); border-radius: 24px; }
 .flight-boarding { background: linear-gradient(135deg, #F7B32B, #F9A03F); }
-
-/* Vue 過場動畫設定 */
-.fade-enter-active, .fade-leave-active {
-    transition: opacity 0.4s ease, transform 0.4s ease;
-}
-.fade-enter-from, .fade-leave-to {
-    opacity: 0;
-    transform: translateY(15px);
-}
+.fade-enter-active, .fade-leave-active { transition: opacity 0.4s ease, transform 0.4s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(15px); }
 </style>
 </head>
 <body class="min-h-screen pb-8 text-[#3A302A]">
@@ -54,48 +45,34 @@ body::before {
         <span class="text-4xl drop-shadow-md">🇹🇭</span>
         <div>
             <h1 class="text-xl font-black tracking-tight">2026 Chiang Mai Phuket</h1>
-            <p class="text-sm opacity-90 flex items-center gap-1 font-medium text-[#A8201A]">❤️ 🏍️ chanb LoLo</p>
+            <p class="text-sm opacity-90 flex items-center gap-1 font-bold text-[#A8201A]">❣️ chanb 🏍️ LoLo</p>
         </div>
     </div>
     <div @click="openRateModal" class="text-right cursor-pointer hover:bg-white/20 px-4 py-2 rounded-3xl transition-colors">
         <div class="text-xs bg-white/25 px-4 py-1.5 rounded-3xl flex items-center gap-1 shadow-inner">
-            <span class="font-bold text-[#A8201A]">HKD ≈ {{ (customRate || rates.THB) ? (customRate || rates.THB).toFixed(4) : '—' }} ฿</span>
+            <span class="font-bold text-[#A8201A]">HKD ≈ {{ (customRate || rates.THB) ? (customRate || rates.THB).toFixed(2) : '—' }} ฿</span>
         </div>
         <div class="text-[10px] text-white/80 mt-1 font-medium">點擊修改實際兌換率</div>
     </div>
 </div>
 
 <div class="flex border-b border-[#F5E6CC] sticky top-[75px] z-40 bg-white/90 backdrop-blur-md">
-    <button @click="currentTab = 'itinerary'"
-            :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'itinerary', 'text-[#B89B7E]': currentTab !== 'itinerary' }"
-            class="flex-1 py-4 text-lg transition-colors">行程表</button>
-    <button @click="currentTab = 'accounting'"
-            :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'accounting', 'text-[#B89B7E]': currentTab !== 'accounting' }"
-            class="flex-1 py-4 text-lg transition-colors">旅費管理</button>
-    <button @click="currentTab = 'rates'"
-            :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'rates', 'text-[#B89B7E]': currentTab !== 'rates' }"
-            class="flex-1 py-4 text-lg transition-colors">實時匯率</button>
-    <button @click="currentTab = 'departure'"
-            :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'departure', 'text-[#B89B7E]': currentTab !== 'departure' }"
-            class="flex-1 py-4 text-lg transition-colors">出發前準備</button>
+    <button @click="currentTab = 'itinerary'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'itinerary', 'text-[#B89B7E]': currentTab !== 'itinerary' }" class="flex-1 py-4 text-lg transition-colors">行程表</button>
+    <button @click="currentTab = 'accounting'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'accounting', 'text-[#B89B7E]': currentTab !== 'accounting' }" class="flex-1 py-4 text-lg transition-colors">旅費管理</button>
+    <button @click="currentTab = 'rates'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'rates', 'text-[#B89B7E]': currentTab !== 'rates' }" class="flex-1 py-4 text-lg transition-colors">實時匯率</button>
+    <button @click="currentTab = 'departure'" :class="{ 'border-b-4 border-[#A8201A] text-[#A8201A] font-bold': currentTab === 'departure', 'text-[#B89B7E]': currentTab !== 'departure' }" class="flex-1 py-4 text-lg transition-colors">出發前準備</button>
 </div>
 
 <transition name="fade" mode="out-in">
     <div v-if="currentTab === 'itinerary'" key="itinerary" class="p-5">
-        <h2 class="text-2xl font-black mb-5 flex items-center gap-2 text-[#A8201A]">
-            <i class="fas fa-calendar-alt text-[#F7B32B]"></i> 14日旅行日程
-        </h2>
-        
+        <h2 class="text-2xl font-black mb-5 flex items-center gap-2 text-[#A8201A]"><i class="fas fa-calendar-alt text-[#F7B32B]"></i> 14日旅行日程</h2>
         <div class="flex gap-3 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory">
-            <div v-for="(day, index) in days" :key="day.date" @click="selectDay(index)"
-                 class="day-card min-w-[88px] bg-white rounded-3xl shadow-sm border border-[#F5E6CC] p-3 text-center snap-center cursor-pointer flex-shrink-0"
-                 :class="{ selected: selectedDayIndex === index }">
+            <div v-for="(day, index) in days" :key="day.date" @click="selectDay(index)" class="day-card min-w-[88px] bg-white rounded-3xl shadow-sm border border-[#F5E6CC] p-3 text-center snap-center cursor-pointer flex-shrink-0" :class="{ selected: selectedDayIndex === index }">
                 <div class="text-[#F7B32B] text-xs font-bold" :class="{'text-white/90': selectedDayIndex === index}">Day {{ index + 1 }}</div>
                 <div class="text-4xl font-black mt-1" :class="{'text-white': selectedDayIndex === index, 'text-[#3A302A]': selectedDayIndex !== index}">{{ day.dayNumber }}</div>
                 <div class="text-xs mt-1 font-medium text-[#A8201A]" :class="{'text-white/80': selectedDayIndex === index}">{{ day.dateStr }}</div>
             </div>
         </div>
-
         <div v-if="selectedDay" class="bg-white rounded-3xl shadow-lg border border-[#F5E6CC] overflow-hidden mt-2">
             <div class="px-6 py-5 bg-[#FFF2D1] border-b border-[#F5E6CC]">
                 <div class="flex items-center gap-4">
@@ -106,7 +83,6 @@ body::before {
                     </div>
                 </div>
             </div>
-
             <div v-if="selectedDay.flight" class="flight-boarding mx-6 mt-6 rounded-3xl overflow-hidden shadow-md">
                 <div class="px-6 py-4 text-white text-xs flex justify-between items-center font-bold">
                     <div class="flex items-center gap-2"><i class="fas fa-plane text-lg"></i> BOARDING PASS</div>
@@ -133,7 +109,6 @@ body::before {
                     <div class="text-right">航班編號<br><span class="text-xl text-[#F7B32B]">{{ selectedDay.flight.number }}</span></div>
                 </div>
             </div>
-
             <div class="p-6">
                 <table class="w-full text-sm">
                     <thead>
@@ -190,7 +165,6 @@ body::before {
                 <div class="text-[#7D6B5D] text-xl flex items-center justify-center gap-2 mt-2 font-bold">
                     ≈ <span class="text-[#A8201A]">{{ totalTHB.toLocaleString() }} ฿</span>
                 </div>
-                
                 <div v-if="totalBudget" class="mt-8">
                     <div class="flex justify-between text-xs mb-2 font-bold text-[#7D6B5D]">
                         <span>已用</span>
@@ -244,9 +218,9 @@ body::before {
             <div v-for="expense in expenses" :key="expense.id" class="bg-white rounded-2xl p-5 flex justify-between items-center shadow-sm border-l-8 hover:shadow-md transition-shadow" :style="{ borderLeftColor: getCategoryColor(expense.category) }">
                 <div class="flex-1">
                     <div class="font-black text-lg text-[#3A302A]">{{ expense.description }}</div>
-                    <div class="text-xs flex items-center gap-3 mt-2 font-bold">
-                        <span class="text-[#A8201A] bg-[#FFF9E6] px-2 py-1 rounded-md">{{ expense.date }}</span>
-                        <span :style="{ backgroundColor: getCategoryColor(expense.category) }" class="px-3 py-1 text-white rounded-full text-[10px] shadow-sm uppercase tracking-wider">{{ expense.category }}</span>
+                    <div class="text-xs flex items-center gap-2 mt-2 font-bold">
+                        <span class="text-[#A8201A] bg-[#FFF9E6] px-2 py-1 rounded-md">{{ expense.date.substring(5) }}</span>
+                        <span :style="{ backgroundColor: getCategoryColor(expense.category) }" class="px-2 py-1 text-white rounded-md text-[10px] shadow-sm uppercase tracking-wider">{{ expense.category }}</span>
                         <span class="text-[#7D6B5D]"><i class="fas fa-wallet mr-1"></i>{{ expense.paymentMethod }}</span>
                     </div>
                 </div>
@@ -268,9 +242,7 @@ body::before {
     </div>
 
     <div v-else-if="currentTab === 'rates'" key="rates" class="p-5">
-        <h2 class="text-2xl font-black mb-6 flex items-center gap-2 text-[#A8201A]">
-            <i class="fas fa-exchange-alt text-[#F7B32B]"></i> 實時匯率計算
-        </h2>
+        <h2 class="text-2xl font-black mb-6 flex items-center gap-2 text-[#A8201A]"><i class="fas fa-exchange-alt text-[#F7B32B]"></i> 實時匯率計算</h2>
         <div class="bg-white border-2 border-[#F7B32B]/30 rounded-3xl p-8 shadow-lg mb-8 relative overflow-hidden">
             <div class="absolute -right-5 -bottom-5 text-[#F7B32B] opacity-10 text-9xl"><i class="fas fa-globe-asia"></i></div>
             <div class="flex items-center justify-between relative z-10">
@@ -309,7 +281,6 @@ body::before {
                     </div>
                 </div>
             </div>
-            
             <div class="mt-8 h-3 bg-[#FFF9E6] border border-[#F5E6CC] rounded-full relative shadow-inner">
                 <div class="h-full bg-gradient-to-r from-[#F7B32B] to-[#F9A03F] rounded-full transition-all duration-1000 ease-out" :style="{ width: countdown.progress + '%' }"></div>
                 <div class="absolute top-1/2 -translate-y-1/2 transition-all duration-1000 drop-shadow-lg" :style="{ left: `calc(${countdown.progress}% - 14px)` }">
@@ -365,14 +336,14 @@ body::before {
 
         <div class="bg-white rounded-3xl p-8 shadow-lg border-2 border-[#F7B32B]">
             <h3 class="text-2xl font-black text-[#A8201A] mb-8 flex items-center gap-3">
-                <i class="fas fa-suitcase-rolling text-[#F7B32B] text-3xl"></i> 泰國14日行李 Check List
+                <i class="fas fa-suitcase-rolling text-[#F7B32B] text-3xl"></i> 泰國 14 日行李 Check List
                 <span class="text-xs bg-[#F7B32B] text-white px-3 py-1 rounded-full font-bold ml-auto shadow-sm">雲端同步</span>
             </h3>
             
             <div class="grid md:grid-cols-2 gap-10">
                 <div class="bg-[#FFF9E6]/50 p-6 rounded-2xl border border-[#F5E6CC]">
                     <h4 class="text-lg font-black text-[#3A302A] mb-4 flex items-center gap-2">
-                        🧑🏻 我的專屬清單
+                        🧑🏻 我的清單 (LoLo)
                         <span class="text-xs bg-white text-[#A8201A] px-2 py-1 rounded-md border border-[#F5E6CC]">{{ checklistMe.filter(i=>i.done).length }}/{{ checklistMe.length }}</span>
                     </h4>
                     <div class="h-1 w-full bg-[#F5E6CC] rounded-full mb-5 overflow-hidden">
@@ -407,7 +378,6 @@ body::before {
                 </div>
             </div>
         </div>
-
     </div>
 </transition>
 
@@ -520,32 +490,43 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// 分類及簡化後的專屬 Checklist
 const defaultChecklistMe = [
-    { text: '護照 + 身份證 + 國際車牌', done: false },
+    { text: '護照 + 身份證', done: false },
+    { text: '機票 + 酒店預訂單 + 保險單', done: false },
+    { text: '泰國車牌 (考到後)', done: false },
     { text: '現金 (THB/HKD) + 信用卡', done: false },
-    { text: '電話 + 充電線 + 尿袋', done: false },
-    { text: '頭盔內襯 + 騎行手套', done: false },
-    { text: 'T-shirt x 7 + 短褲 x 4', done: false },
-    { text: '泳褲 x 2 + 內褲 x 14', done: false },
-    { text: '太陽眼鏡 + 防曬霜', done: false },
-    { text: '波鞋 + 拖鞋', done: false },
-    { text: '個人藥物 (腸胃藥/止痛藥)', done: false },
-    { text: '牙刷牙膏 + 剃鬚刀', done: false },
-    { text: '防蚊液 + 蚊貼', done: false }
+    { text: '電話 + 充電線 + 轉插 + 尿袋', done: false },
+    { text: '速乾T恤 x6 + 長褲 x2 + 短褲 x3', done: false },
+    { text: '內衣褲 + 襪 x10', done: false },
+    { text: '防曬 / 防風薄外套', done: false },
+    { text: '泳褲 + 拖鞋 + 行山波鞋', done: false },
+    { text: '兩套雨衣 (全罩) + 防水背包套', done: false },
+    { text: '全罩頭盔 + 騎行手套', done: false },
+    { text: '車鎖 + 頭盔鎖', done: false },
+    { text: '太陽眼鏡 + 防曬袖套', done: false },
+    { text: 'GoPro / 相機 + 耳機', done: false },
+    { text: '防蚊水 + 搓手液 + 濕紙巾', done: false },
+    { text: '常備藥 (腸胃/止痛/暈車/膠布)', done: false },
+    { text: '洗漱用品 + 毛巾 + 水樽', done: false }
 ];
 
 const defaultChecklistChanb = [
     { text: '護照 + 身份證', done: false },
+    { text: '旅行保險單 (包電單車)', done: false },
     { text: '現金 + 信用卡 + App', done: false },
     { text: '電話 + 充電線 + 尿袋', done: false },
-    { text: '防曬外套 / 薄長袖', done: false },
-    { text: '靚靚打卡衫裙 + 短褲', done: false },
-    { text: '泳衣 x 2 + 內衣褲 x 14', done: false },
-    { text: '化妝品 + 護膚品 + 卸妝', done: false },
-    { text: '太陽眼鏡 + 太陽帽', done: false },
-    { text: '波鞋 + 靚拖鞋/涼鞋', done: false },
+    { text: '打卡衫裙 + 長短褲', done: false },
+    { text: '內衣褲 + 襪 x10', done: false },
+    { text: '防曬 / 防風薄外套', done: false },
+    { text: '泳衣 x2 + 拖鞋 + 波鞋', done: false },
+    { text: '全罩頭盔', done: false },
+    { text: '太陽眼鏡 + 太陽帽 + 防曬袖套', done: false },
+    { text: '防曬霜 (SPF50+) + 護膚化妝品', done: false },
     { text: '直髮夾 / 捲髮器', done: false },
-    { text: '個人常備藥物', done: false }
+    { text: '女性用品 + 速乾毛巾', done: false },
+    { text: '耳機 + 輕便日用背包', done: false },
+    { text: '摺傘 + 環保水樽', done: false }
 ];
 
 const { createApp } = Vue;
@@ -598,7 +579,11 @@ computed: {
 watch: {
     currentTab(newTab) {
         if (newTab === 'accounting') {
-            this.$nextTick(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); });
+            // 加入 450ms 延遲，確保 <transition> 動畫完全播完、<canvas> 出現後先開始畫圖！
+            setTimeout(() => { 
+                this.updateExpenseChart(); 
+                this.updateExpenseLineChart(); 
+            }, 450);
         }
         if (newTab === 'rates') {
             this.$nextTick(() => this.fetchRates());
@@ -611,23 +596,16 @@ methods: {
     openRateModal() { this.tempRate = this.currentRate; this.showRateModal = true; },
     openBudgetModal() { this.tempBudget = this.totalBudget || 25000; this.showBudgetModal = true; },
     
-    // 全新高對比活潑配色
     getCategoryColor(category) {
         const colorMap = { 
-            '食物': '#FF3366', // 鮮桃紅
-            '交通': '#2EC4B6', // 湖水綠
-            '入油': '#FF9F1C', // 亮橙黃
-            '住宿': '#20A4F3', // 天空藍
-            '娛樂': '#9D4EDD', // 鮮豔紫
-            '購物': '#FF6B35', // 亮橘色
-            '其他': '#A9B1BD'  // 中性灰
+            '食物': '#FF3366', '交通': '#2EC4B6', '入油': '#FF9F1C', '住宿': '#20A4F3', 
+            '娛樂': '#9D4EDD', '購物': '#FF6B35', '其他': '#A9B1BD'  
         };
         return colorMap[category] || '#A9B1BD';
     },
 
     toggleChecklist(person, index) {
         this[`checklist${person}`][index].done = !this[`checklist${person}`][index].done;
-        // 同步去 Firebase
         db.ref('checklist').set({
             me: this.checklistMe,
             chanb: this.checklistChanb
@@ -654,7 +632,7 @@ methods: {
             snapshot.forEach(child => { loaded.unshift(child.val()); });
             this.expenses = loaded;
             if(this.currentTab === 'accounting'){
-                this.$nextTick(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); });
+                setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 450);
             }
         });
     },
@@ -672,7 +650,7 @@ methods: {
         const data = Object.values(categoryTotals);
         const colors = labels.map(label => this.getCategoryColor(label));
         new Chart(canvas, {
-            type: 'doughnut', // 轉用 Doughnut 比較生動
+            type: 'doughnut',
             data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderColor: '#ffffff', borderWidth: 4, hoverOffset: 8 }] },
             options: {
                 responsive: true,
@@ -749,7 +727,7 @@ methods: {
             this.countdown.hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             this.countdown.minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             this.countdown.seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            const totalMs = 1000 * 60 * 60 * 24 * 30; // 30日為進度條範圍
+            const totalMs = 1000 * 60 * 60 * 24 * 30;
             this.countdown.progress = Math.max(0, Math.min(100, 100 - ((diff / totalMs) * 100)));
         }, 1000);
     },
@@ -757,13 +735,13 @@ methods: {
         this.customRate = parseFloat(this.tempRate);
         db.ref('settings/customRate').set(this.customRate);
         this.showRateModal = false;
-        if(this.currentTab === 'accounting') { this.updateExpenseChart(); this.updateExpenseLineChart(); }
+        if(this.currentTab === 'accounting') { setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 450); }
     },
     clearCustomRate() {
         this.customRate = null;
         db.ref('settings/customRate').set(null);
         this.showRateModal = false;
-        if(this.currentTab === 'accounting') { this.updateExpenseChart(); this.updateExpenseLineChart(); }
+        if(this.currentTab === 'accounting') { setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 450); }
     },
     saveBudget() {
         this.totalBudget = parseFloat(this.tempBudget);
@@ -783,7 +761,6 @@ mounted() {
     db.ref('settings/customRate').on('value', snapshot => { this.customRate = snapshot.val(); });
     db.ref('settings/budget').on('value', snapshot => { this.totalBudget = snapshot.val(); });
     
-    // 監聽 Checklist 數據
     db.ref('checklist').on('value', snapshot => {
         if(snapshot.exists()) {
             const data = snapshot.val();
