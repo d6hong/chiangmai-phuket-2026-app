@@ -12,7 +12,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
-        body { font-family: 'Noto Sans TC', system-ui, sans-serif; }
+        body { 
+            font-family: 'Noto Sans TC', system-ui, sans-serif; 
+            background-image: url('https://raw.githubusercontent.com/d6hong/chiangmai-phuket-2026-app/main/IMG_7594.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.85);
+            z-index: -1;
+        }
         .day-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .day-card:hover { transform: scale(1.05); }
         .selected { border: 3px solid #10b981; box-shadow: 0 0 0 5px rgba(16,185,129,0.3); }
@@ -20,7 +34,7 @@
         .flight-card { background: linear-gradient(135deg, #10b981, #15803d); }
     </style>
 </head>
-<body class="bg-gradient-to-br from-emerald-100 to-sky-100 min-h-screen pb-8">
+<body class="min-h-screen pb-8">
     <div id="app" class="max-w-2xl mx-auto bg-white min-h-screen shadow-2xl rounded-3xl overflow-hidden">
 
         <!-- 頂部標頭 -->
@@ -159,7 +173,7 @@
                 </div>
             </div>
 
-            <!-- 支出統計圖表（統一指定的鮮明對比顏色 + 純文字 legend） -->
+            <!-- 支出統計圖表 -->
             <div class="bg-white rounded-3xl p-6 shadow-sm">
                 <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-emerald-800">
                     <i class="fas fa-chart-pie"></i> 支出統計（按類別）
@@ -173,7 +187,7 @@
                 </div>
             </div>
 
-            <!-- 完整支出歷史紀錄列表（類別標籤已用指定顏色） -->
+            <!-- 完整支出歷史紀錄列表 -->
             <div class="space-y-3">
                 <div v-for="expense in expenses" :key="expense.id" 
                      class="bg-white rounded-3xl p-5 flex justify-between items-center shadow-sm">
@@ -602,8 +616,8 @@
 
                     const labels = Object.keys(categoryTotals);
                     const data = Object.values(categoryTotals);
-                    // 統一指定的鮮明對比顏色（按你最新指定的順序）
-                    const colors = ['#FF9F40', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF6384', '#C9CBCF'];
+                    // 動態取得正確顏色（保證圓餅圖與類別標籤顏色完全一致）
+                    const colors = labels.map(label => this.getCategoryColor(label));
 
                     this.expenseChart = new Chart(canvas, {
                         type: 'pie',
