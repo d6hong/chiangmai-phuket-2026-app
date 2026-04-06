@@ -173,7 +173,7 @@
                 </div>
             </div>
 
-            <!-- 總支出 + 預算卡片（已加入預算顯示） -->
+            <!-- 總支出 + 預算卡片 -->
             <div class="bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-3xl p-8 text-center">
                 <div class="flex justify-between items-center mb-4">
                     <div class="text-emerald-600 text-sm">總支出</div>
@@ -233,7 +233,7 @@
                     </div>
                 </div>
 
-                <!-- 折線圖 -->
+                <!-- 折線圖（x軸只顯示 dd） -->
                 <div class="bg-white rounded-3xl p-6 shadow-sm">
                     <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-emerald-800">
                         <i class="fas fa-chart-line"></i> 支出折線圖（按日期）
@@ -619,8 +619,13 @@
                     db.ref('expenses').push(newExpense);
                     this.showAddModal = false;
                     this.newRecord = { date: new Date().toISOString().slice(0,10), description: '', amount: 0, category: '食物', paymentMethod: '現金' };
-                    this.updateExpenseChart();
-                    this.updateExpenseLineChart();
+
+                    // 強制即時更新兩個圖表（使用 $nextTick 確保 DOM 已更新）
+                    this.$nextTick(() => {
+                        this.updateExpenseChart();
+                        this.updateExpenseLineChart();
+                    });
+
                     alert('✅ 已即時更新圖表及預算顯示，並同步到雲端！');
                 },
                 deleteExpense(id) {
@@ -629,8 +634,10 @@
                         db.ref('expenses').once('value', snapshot => {
                             snapshot.forEach(child => { if (child.val().id === id) child.ref.remove(); });
                         });
-                        this.updateExpenseChart();
-                        this.updateExpenseLineChart();
+                        this.$nextTick(() => {
+                            this.updateExpenseChart();
+                            this.updateExpenseLineChart();
+                        });
                     }
                 },
                 loadExpenses() {
@@ -638,8 +645,10 @@
                         const loaded = [];
                         snapshot.forEach(child => { loaded.unshift(child.val()); });
                         this.expenses = loaded;
-                        this.updateExpenseChart();
-                        this.updateExpenseLineChart();
+                        this.$nextTick(() => {
+                            this.updateExpenseChart();
+                            this.updateExpenseLineChart();
+                        });
                     });
                 },
                 updateExpenseChart() {
@@ -679,12 +688,13 @@
                     });
 
                     const sortedDates = Object.keys(dateTotals).sort();
+                    const displayLabels = sortedDates.map(date => date.split('-')[2]);  // 只顯示 dd (例如 "10")
                     const dataValues = sortedDates.map(date => dateTotals[date]);
 
                     this.expenseLineChart = new Chart(canvas, {
                         type: 'line',
                         data: {
-                            labels: sortedDates,
+                            labels: displayLabels,
                             datasets: [{
                                 label: '每日支出 (THB)',
                                 data: dataValues,
@@ -699,7 +709,15 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: true,
-                            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' THB' } } },
+                            plugins: { 
+                                legend: { display: false }, 
+                                tooltip: { 
+                                    callbacks: { 
+                                        title: (tooltipItems) => sortedDates[tooltipItems[0].dataIndex],  // tooltip 顯示完整日期
+                                        label: ctx => ctx.raw + ' THB' 
+                                    } 
+                                } 
+                            },
                             scales: {
                                 y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
                                 x: { grid: { color: '#f1f5f9' } }
@@ -749,11 +767,9 @@
                 this.loadExpenses();
                 this.fetchRates();
 
-                // 讀取上次自定義匯率
                 const savedRate = localStorage.getItem('chanbCustomRate');
                 if (savedRate) this.customRate = parseFloat(savedRate);
 
-                // 讀取上次總預算
                 const savedBudget = localStorage.getItem('chanbTotalBudget');
                 if (savedBudget) this.totalBudget = parseFloat(savedBudget);
             }
