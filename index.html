@@ -28,17 +28,16 @@
             <div class="flex items-center gap-3">
                 <span class="text-4xl">🇹🇭</span>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">2026 清邁 & 布吉</h1>   <!-- 標題字體已縮細 -->
+                    <h1 class="text-xl font-bold tracking-tight">2026 清邁 & 布吉</h1>
                     <p class="text-sm opacity-90 flex items-center gap-1">🏍️ chanb LoLo</p>
                 </div>
             </div>
             
-            <!-- 可點擊的匯率顯示（彈出自訂匯率對話框） -->
+            <!-- 簡化後的匯率顯示（已移除多餘字眼） -->
             <div @click="showRateModal = true" 
                  class="text-right cursor-pointer hover:bg-white/10 px-4 py-2 rounded-3xl transition-colors">
                 <div class="text-xs bg-white/20 px-4 py-1 rounded-3xl flex items-center gap-1">
-                    <span class="font-medium">exchangerate.host</span>
-                    <span class="font-bold">1 HKD ≈ {{ customRate || rates.THB ? (customRate || rates.THB).toFixed(2) : '—' }} ฿</span>
+                    <span class="font-bold">HKD ≈ {{ customRate || rates.THB ? (customRate || rates.THB).toFixed(2) : '—' }} ฿</span>
                 </div>
                 <div class="text-[10px] text-white/70 mt-px">點擊修改實際兌換率</div>
             </div>
@@ -63,7 +62,7 @@
                 <i class="fas fa-calendar-alt"></i> 14日清邁布吉旅行
             </h2>
 
-            <!-- 橫向 Day 卡片（已按圖片明顯縮細） -->
+            <!-- 橫向 Day 卡片 -->
             <div class="flex gap-3 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory">
                 <div v-for="(day, index) in days" :key="day.date" @click="selectDay(index)"
                      class="day-card min-w-[88px] bg-white rounded-3xl shadow-md p-3 text-center snap-center cursor-pointer flex-shrink-0"
@@ -151,7 +150,7 @@
                 </button>
             </div>
 
-            <!-- 總支出卡片（使用自訂或API匯率） -->
+            <!-- 總支出卡片 -->
             <div class="bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-3xl p-8 text-center">
                 <div class="text-emerald-600 text-sm">總支出</div>
                 <div class="text-5xl font-bold text-emerald-800">{{ totalHKD.toLocaleString() }} HKD</div>
@@ -160,7 +159,7 @@
                 </div>
             </div>
 
-            <!-- 支出統計圖表 -->
+            <!-- 支出統計圖表（鮮明對比顏色） -->
             <div class="bg-white rounded-3xl p-6 shadow-sm">
                 <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-emerald-800">
                     <i class="fas fa-chart-pie"></i> 支出統計（按類別）
@@ -174,7 +173,7 @@
                 </div>
             </div>
 
-            <!-- 完整支出歷史紀錄列表 -->
+            <!-- 完整支出歷史紀錄列表（類別已加上對應鮮明顏色） -->
             <div class="space-y-3">
                 <div v-for="expense in expenses" :key="expense.id" 
                      class="bg-white rounded-3xl p-5 flex justify-between items-center shadow-sm">
@@ -182,7 +181,10 @@
                         <div class="font-medium">{{ expense.description }}</div>
                         <div class="text-xs text-gray-500 flex items-center gap-3 mt-1">
                             <span>{{ expense.date }}</span>
-                            <span class="px-3 py-0.5 bg-emerald-100 text-emerald-700 rounded-2xl text-[10px]">{{ expense.category }}</span>
+                            <span :style="{ backgroundColor: getCategoryColor(expense.category) }" 
+                                  class="px-3 py-0.5 text-white rounded-2xl text-[10px] font-medium">
+                                {{ expense.category }}
+                            </span>
                             <span class="text-emerald-600">{{ expense.paymentMethod }}</span>
                         </div>
                     </div>
@@ -227,7 +229,6 @@
                     </div>
                 </div>
             </div>
-            <!-- 完整最後更新時間 -->
             <div class="text-center text-xs text-emerald-500">
                 最後更新：{{ lastUpdateTime }}<br>
                 (數據每小時自動更新一次)
@@ -342,8 +343,8 @@
                     showRateModal: false,
                     expenses: [],
                     rates: { THB: 4.17 },
-                    customRate: null,          // 用戶手動輸入的實際匯率
-                    tempRate: 4.17,            // 對話框臨時輸入
+                    customRate: null,
+                    tempRate: 4.17,
                     lastUpdateTime: '',
                     newRecord: {
                         date: new Date().toISOString().slice(0,10),
@@ -536,6 +537,18 @@
             },
             methods: {
                 selectDay(index) { this.selectedDayIndex = index; },
+                getCategoryColor(category) {
+                    const colorMap = {
+                        '食物': '#FF6384',
+                        '交通': '#36A2EB',
+                        '入油': '#FFCE56',
+                        '住宿': '#4BC0C0',
+                        '娛樂': '#9966FF',
+                        '購物': '#FF9F40',
+                        '其他': '#C9CBCF'
+                    };
+                    return colorMap[category] || '#10b981';
+                },
                 addExpense() {
                     if (!this.newRecord.description || this.newRecord.amount <= 0) {
                         alert('請填寫項目名稱同金額呀～');
@@ -600,7 +613,8 @@
                         return emojiMap[cat] || cat;
                     });
                     const data = Object.values(categoryTotals);
-                    const colors = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
+                    // 鮮明對比顏色（無綠色主調）
+                    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF'];
 
                     this.expenseChart = new Chart(canvas, {
                         type: 'pie',
@@ -628,8 +642,6 @@
                         const res = await fetch('https://api.exchangerate.host/latest?base=HKD&symbols=THB');
                         const data = await res.json();
                         this.rates.THB = data.rates.THB;
-                        
-                        // 完整 yyyy-mm-dd hh:mm:ss 格式
                         const now = new Date();
                         this.lastUpdateTime = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
                     } catch(e) {}
@@ -637,7 +649,7 @@
                 saveCustomRate() {
                     this.customRate = parseFloat(this.tempRate);
                     this.showRateModal = false;
-                    this.updateExpenseChart();   // 立即更新總額顯示
+                    this.updateExpenseChart();
                     alert('✅ 自訂匯率已儲存並套用到所有旅費計算！');
                 },
                 clearCustomRate() {
