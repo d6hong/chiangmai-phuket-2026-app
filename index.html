@@ -47,7 +47,7 @@
                 </div>
             </div>
             
-            <!-- 右上角自定義匯率（已支援 localStorage） -->
+            <!-- 右上角自定義匯率 -->
             <div @click="openRateModal" 
                  class="text-right cursor-pointer hover:bg-white/10 px-4 py-2 rounded-3xl transition-colors">
                 <div class="text-xs bg-white/20 px-4 py-1 rounded-3xl flex items-center gap-1">
@@ -176,16 +176,34 @@
                 </div>
             </div>
 
-            <!-- 支出統計圖表 -->
-            <div class="bg-white rounded-3xl p-6 shadow-sm">
-                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-emerald-800">
-                    <i class="fas fa-chart-pie"></i> 支出統計（按類別）
-                </h3>
-                <div class="relative h-72 flex items-center justify-center">
-                    <canvas id="expenseChart"></canvas>
-                    <div v-if="expenses.length === 0" class="absolute inset-0 flex flex-col items-center justify-center text-emerald-400 bg-white/80 rounded-3xl">
-                        <i class="fas fa-chart-pie text-6xl mb-3 opacity-30"></i>
-                        <p class="text-sm text-center">暫無支出數據<br>新增後會顯示圓餅圖</p>
+            <!-- 兩個圖表並排：圓餅圖 + 支出折線圖 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- 支出統計圓餅圖 -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-emerald-800">
+                        <i class="fas fa-chart-pie"></i> 支出統計（按類別）
+                    </h3>
+                    <div class="relative h-72 flex items-center justify-center">
+                        <canvas id="expenseChart"></canvas>
+                        <div v-if="expenses.length === 0" class="absolute inset-0 flex flex-col items-center justify-center text-emerald-400 bg-white/80 rounded-3xl">
+                            <i class="fas fa-chart-pie text-6xl mb-3 opacity-30"></i>
+                            <p class="text-sm text-center">暫無支出數據<br>新增後會顯示圓餅圖</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 新增：支出折線圖（按日期） -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-emerald-800">
+                        <i class="fas fa-chart-line"></i> 支出折線圖（按日期）
+                    </h3>
+                    <div class="relative h-72 flex items-center justify-center">
+                        <canvas id="expenseLineChart"></canvas>
+                        <div v-if="expenses.length === 0" class="absolute inset-0 flex flex-col items-center justify-center text-emerald-400 bg-white/80 rounded-3xl">
+                            <i class="fas fa-chart-line text-6xl mb-3 opacity-30"></i>
+                            <p class="text-sm text-center">暫無支出數據<br>新增後會顯示折線圖</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -222,7 +240,7 @@
             </div>
         </div>
 
-        <!-- 實時匯率 Tab（已改為小數點後4位） -->
+        <!-- 實時匯率 Tab -->
         <div v-else-if="currentTab === 'rates'" class="p-5">
             <h2 class="text-2xl font-semibold mb-6 flex items-center gap-2 text-emerald-800">
                 <i class="fas fa-chart-line"></i> 實時匯率（exchangerate.host）
@@ -246,7 +264,6 @@
                     </div>
                 </div>
             </div>
-            <!-- 最後更新時間 -->
             <div class="text-center text-xs text-emerald-500">
                 最後更新：{{ lastUpdateTime }}<br>
                 (數據每小時自動更新一次)
@@ -468,6 +485,7 @@
                         paymentMethod: '現金'
                     },
                     expenseChart: null,
+                    expenseLineChart: null,   // 新增折線圖實例
                     days: [
                         { date: "2026-05-10", dayNumber: "10", dateStr: "5月10日", displayDate: "5月10日（星期日）", title: "抵達 + TM30 + 租車 + 午餐 + 真心市集 + 帕尼帕診所 + 塔佩門週日夜市 + Relax Express按摩", flight: { departure: "07:50", arrival: "09:45", from: "HKG", to: "CNX", number: "UO738" }, activities: [ { time: "07:50-09:45", activity: "UO738 HKG→CNX 抵達機場", ride: "Grab/Taxi 20分鐘", note: "取行李" }, { time: "10:00-11:30", activity: "Proud Phu Fah check-in + TM30", ride: "0km（酒店內）", note: "超快" }, { time: "11:30-12:00", activity: "Grab/步行去 Tawan Bike 租 ADV 160", ride: "10-15分鐘 / 5km", note: "雙頭盔+鎖" }, { time: "12:00-13:00", activity: "午餐（Tawan Bike附近）", ride: "—", note: "輕鬆食Khao Soi" }, { time: "13:00-13:15", activity: "騎車去 真心市集（Jing Jai Market）", ride: "10-15分鐘 / 6-8km", note: "週日市集最後時段" }, { time: "13:15-15:00", activity: "真心市集逛手作 + 有機食物 + 咖啡 + 影相", ride: "園內短途", note: "抓緊時間，3點前主要攤檔收" }, { time: "15:00-15:15", activity: "騎車去 帕尼帕診所 ปณิภาคลินิก", ride: "10分鐘 / 3-5km", note: "同一區，超方便" }, { time: "15:15-18:00", activity: "古城自由探索（Wat Phra Singh + Chedi Luang）", ride: "隨意短途（總20-30km）", note: "慢慢玩" }, { time: "18:00-21:00", activity: "塔佩門週日夜市（Tha Phae Gate Sunday Walking Street）", ride: "步行或1分鐘", note: "週日限定5pm-11pm，超熱鬧浪漫！" }, { time: "21:00-22:30", activity: "Relax Express@Chiangmai Gate 按摩", ride: "10-15分鐘 / 5km", note: "搭飛機後超舒服" }, { time: "22:30-22:45", activity: "返酒店", ride: "10-15分鐘 / 5km", note: "休息" } ] },
                         { date: "2026-05-11", dayNumber: "11", dateStr: "5月11日", displayDate: "5月11日（星期一）", title: "Theory Class Day 1 + 素帖寺（Doi Suthep Temple）夜景", activities: [ { time: "07:00-07:45", activity: "酒店出發去Driving School", ride: "30-45分鐘 / 15-20km", note: "準時8am" }, { time: "08:00-18:00", activity: "Theory Class 全日", ride: "—", note: "跟學校時間" }, { time: "18:15-19:00", activity: "騎車去 素帖寺（Doi Suthep Temple）", ride: "30-45分鐘 / 15km", note: "晚上燈光超美" }, { time: "19:00-20:30", activity: "素帖寺 + 觀景台 + 敲鐘", ride: "園內2km", note: "夜景一流" }, { time: "晚上", activity: "Night Bazaar食飯 + 按摩", ride: "5-10分鐘", note: "慶祝Theory pass" } ] },
@@ -496,7 +514,10 @@
             watch: {
                 currentTab(newTab) {
                     if (newTab === 'accounting') {
-                        this.$nextTick(() => this.updateExpenseChart());
+                        this.$nextTick(() => {
+                            this.updateExpenseChart();
+                            this.updateExpenseLineChart();
+                        });
                     }
                     if (newTab === 'rates') {
                         this.$nextTick(() => this.fetchRates());
@@ -519,6 +540,7 @@
                     this.showAddModal = false;
                     this.newRecord = { date: new Date().toISOString().slice(0,10), description: '', amount: 0, category: '食物', paymentMethod: '現金' };
                     this.updateExpenseChart();
+                    this.updateExpenseLineChart();
                     alert('✅ 已保存並同步到雲端！其他裝置會即時更新完整紀錄。');
                 },
                 deleteExpense(id) {
@@ -528,6 +550,7 @@
                             snapshot.forEach(child => { if (child.val().id === id) child.ref.remove(); });
                         });
                         this.updateExpenseChart();
+                        this.updateExpenseLineChart();
                     }
                 },
                 loadExpenses() {
@@ -536,6 +559,7 @@
                         snapshot.forEach(child => { loaded.unshift(child.val()); });
                         this.expenses = loaded;
                         this.updateExpenseChart();
+                        this.updateExpenseLineChart();
                     });
                 },
                 updateExpenseChart() {
@@ -563,6 +587,51 @@
                         }
                     });
                 },
+                // 新增：支出折線圖（按日期）
+                updateExpenseLineChart() {
+                    const canvas = document.getElementById('expenseLineChart');
+                    if (!canvas) return;
+                    if (this.expenseLineChart) this.expenseLineChart.destroy();
+
+                    const dateTotals = {};
+                    this.expenses.forEach(exp => {
+                        const date = exp.date || '未知日期';
+                        dateTotals[date] = (dateTotals[date] || 0) + (parseFloat(exp.amount) || 0);
+                    });
+
+                    // 排序日期
+                    const sortedDates = Object.keys(dateTotals).sort();
+                    const dataValues = sortedDates.map(date => dateTotals[date]);
+
+                    this.expenseLineChart = new Chart(canvas, {
+                        type: 'line',
+                        data: {
+                            labels: sortedDates,
+                            datasets: [{
+                                label: '每日支出 (THB)',
+                                data: dataValues,
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                borderWidth: 3,
+                                tension: 0.4,
+                                pointRadius: 5,
+                                pointBackgroundColor: '#10b981'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { callbacks: { label: ctx => ctx.raw + ' THB' } }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                                x: { grid: { color: '#f1f5f9' } }
+                            }
+                        }
+                    });
+                },
                 async fetchRates() {
                     try {
                         const res = await fetch('https://api.exchangerate.host/latest?base=HKD&symbols=THB');
@@ -574,16 +643,18 @@
                 },
                 saveCustomRate() {
                     this.customRate = parseFloat(this.tempRate);
-                    localStorage.setItem('chanbCustomRate', this.customRate);   // 保存到 localStorage
+                    localStorage.setItem('chanbCustomRate', this.customRate);
                     this.showRateModal = false;
                     this.updateExpenseChart();
+                    this.updateExpenseLineChart();
                     alert('✅ 自訂匯率已儲存並套用到所有旅費計算！下次打開網站會自動載入。');
                 },
                 clearCustomRate() {
                     this.customRate = null;
-                    localStorage.removeItem('chanbCustomRate');   // 清除儲存
+                    localStorage.removeItem('chanbCustomRate');
                     this.showRateModal = false;
                     this.updateExpenseChart();
+                    this.updateExpenseLineChart();
                     alert('已清除自訂匯率，恢復使用 exchangerate.host 自動匯率');
                 }
             },
@@ -591,11 +662,8 @@
                 this.loadExpenses();
                 this.fetchRates();
 
-                // 自動讀取上次保存的自定義匯率
                 const savedRate = localStorage.getItem('chanbCustomRate');
-                if (savedRate) {
-                    this.customRate = parseFloat(savedRate);
-                }
+                if (savedRate) this.customRate = parseFloat(savedRate);
             }
         }).mount('#app')
     </script>
