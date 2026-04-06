@@ -156,13 +156,17 @@
                 </div>
             </div>
 
-            <!-- 支出統計圖表 -->
+            <!-- 支出統計圖表（置中 + 更多對比色彩） -->
             <div class="bg-white rounded-3xl p-6 shadow-sm">
                 <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-emerald-800">
                     <i class="fas fa-chart-pie"></i> 支出統計（按類別）
                 </h3>
-                <div class="relative h-72">
+                <div class="relative h-72 flex items-center justify-center">
                     <canvas id="expenseChart"></canvas>
+                </div>
+                <div v-if="expenses.length === 0" class="absolute inset-0 flex flex-col items-center justify-center text-emerald-400">
+                    <i class="fas fa-chart-pie text-6xl mb-3 opacity-30"></i>
+                    <p class="text-sm text-center">暫無支出數據<br>新增後會顯示圓餅圖</p>
                 </div>
             </div>
 
@@ -221,7 +225,7 @@
             </div>
         </div>
 
-        <!-- 新增支出 Modal（日期框已修正為與項目名稱框完全一樣大小） -->
+        <!-- 新增支出 Modal（日期框已調整為與項目名稱框大小完全一致） -->
         <div v-if="showAddModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
             <div class="bg-white rounded-3xl w-full max-w-[380px] mx-4 p-5 shadow-2xl">
                 <h3 class="text-2xl font-semibold text-emerald-800 mb-6 flex items-center gap-2">
@@ -552,7 +556,9 @@
                         return emojiMap[cat] || cat;
                     });
                     const data = Object.values(categoryTotals);
-                    const colors = ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5', '#ecfdf5'];
+
+                    // 更多對比色彩
+                    const colors = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
 
                     this.expenseChart = new Chart(canvas, {
                         type: 'pie',
@@ -562,7 +568,7 @@
                                 data: data,
                                 backgroundColor: colors,
                                 borderColor: '#ffffff',
-                                borderWidth: 3
+                                borderWidth: 4
                             }]
                         },
                         options: {
