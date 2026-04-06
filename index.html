@@ -24,12 +24,12 @@ body::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(250, 245, 235, 0.88);
+    background: rgba(250, 245, 235, 0.92);
     z-index: -1;
 }
 .day-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .day-card:hover { transform: scale(1.05); }
-.selected { border: 3px solid #FF8FAB; box-shadow: 0 0 0 5px rgba(255, 143, 171, 0.3); }
+.selected { background-color: #FF8FAB !important; color: white; border: 3px solid #FF8FAB; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .countdown-card { background: linear-gradient(135deg, #FFEBF0, #F5EDE3); border-radius: 24px; }
 .flight-boarding { background: linear-gradient(135deg, #FF8FAB, #FF6B81); }
@@ -38,7 +38,7 @@ body::before {
 <body class="min-h-screen pb-8">
 <div id="app" class="max-w-2xl mx-auto bg-white min-h-screen shadow-2xl rounded-3xl overflow-hidden">
 
-<!-- 頂部標頭（新柔和粉紅風格） -->
+<!-- 頂部標頭（柔和粉紅風格） -->
 <div class="bg-gradient-to-r from-pink-400 to-rose-400 text-white px-6 py-5 flex items-center justify-between sticky top-0 z-50">
     <div class="flex items-center gap-3">
         <span class="text-4xl">🇹🇭</span>
@@ -55,7 +55,7 @@ body::before {
     </div>
 </div>
 
-<!-- Tab 導航（新柔和粉紅） -->
+<!-- Tab 導航 -->
 <div class="flex border-b sticky top-[73px] z-50 bg-white">
     <button @click="currentTab = 'itinerary'" 
             :class="{ 'border-b-4 border-pink-400 text-pink-600': currentTab === 'itinerary' }"
@@ -78,10 +78,10 @@ body::before {
     </h2>
     <div class="flex gap-3 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory">
         <div v-for="(day, index) in days" :key="day.date" @click="selectDay(index)"
-             class="day-card min-w-[88px] bg-white rounded-3xl shadow-md p-3 text-center snap-center cursor-pointer flex-shrink-0"
+             class="day-card min-w-[88px] bg-white rounded-3xl shadow-md p-3 text-center snap-center cursor-pointer flex-shrink-0 text-pink-700"
              :class="{ selected: selectedDayIndex === index }">
             <div class="text-pink-500 text-xs font-medium">Day {{ index + 1 }}</div>
-            <div class="text-4xl font-bold text-pink-700">{{ day.dayNumber }}</div>
+            <div class="text-4xl font-bold">{{ day.dayNumber }}</div>
             <div class="text-xs text-pink-400 mt-1">{{ day.dateStr }}</div>
         </div>
     </div>
@@ -96,26 +96,26 @@ body::before {
             </div>
         </div>
 
-        <!-- 新版粉紅 Boarding Pass 航班卡 -->
+        <!-- 航班資訊卡 - 文字已改為白色 -->
         <div v-if="selectedDay.flight" class="flight-boarding mx-6 mt-6 rounded-3xl overflow-hidden shadow-xl">
             <div class="px-6 py-4 text-white text-xs flex justify-between items-center">
                 <div class="flex items-center gap-1"><i class="fas fa-plane"></i> BOARDING PASS</div>
-                <div class="text-white/80 text-sm">{{ selectedDay.flight.number }}</div>
+                <div class="text-white/90 text-sm">{{ selectedDay.flight.number }}</div>
             </div>
             <div class="px-6 pb-6 flex justify-between items-center">
                 <div class="text-center">
-                    <div class="text-5xl font-bold">{{ selectedDay.flight.from }}</div>
+                    <div class="text-5xl font-bold text-white">{{ selectedDay.flight.from }}</div>
                     <div class="text-xs text-white/70 mt-1">出發</div>
-                    <div class="text-3xl font-semibold">{{ selectedDay.flight.departure }}</div>
+                    <div class="text-3xl font-semibold text-white">{{ selectedDay.flight.departure }}</div>
                 </div>
                 <div class="flex flex-col items-center">
                     <i class="fas fa-plane text-4xl text-white rotate-45"></i>
                     <div class="text-xs text-white/60 mt-1">→</div>
                 </div>
                 <div class="text-center">
-                    <div class="text-5xl font-bold">{{ selectedDay.flight.to }}</div>
+                    <div class="text-5xl font-bold text-white">{{ selectedDay.flight.to }}</div>
                     <div class="text-xs text-white/70 mt-1">抵達</div>
-                    <div class="text-3xl font-semibold">{{ selectedDay.flight.arrival }}</div>
+                    <div class="text-3xl font-semibold text-white">{{ selectedDay.flight.arrival }}</div>
                 </div>
             </div>
             <div class="bg-white text-pink-700 px-6 py-4 flex justify-between text-sm font-medium rounded-b-3xl">
@@ -273,20 +273,20 @@ body::before {
     </div>
 </div>
 
-<!-- 出發前準備 Tab（新增出發時間倒數卡） -->
+<!-- 出發前準備 Tab -->
 <div v-else-if="currentTab === 'departure'" class="p-5 space-y-8">
-    <!-- 新增出發時間倒數卡（完全參考你上傳的圖片） -->
+    <!-- 出發時間倒數卡（字體已縮細） -->
     <div class="countdown-card p-6 shadow-xl text-pink-700 relative overflow-hidden">
         <div class="flex justify-between items-start">
             <div>
                 <div class="text-xs tracking-widest font-medium">距離出發</div>
-                <div class="flex items-baseline gap-3 mt-2">
-                    <span class="text-7xl font-bold text-pink-500">{{ countdown.days }}</span>
-                    <span class="text-4xl font-medium">天</span>
-                    <span class="text-6xl font-bold">{{ countdown.hours.toString().padStart(2,'0') }}:{{ countdown.minutes.toString().padStart(2,'0') }}:{{ countdown.seconds.toString().padStart(2,'0') }}</span>
+                <div class="flex items-baseline gap-3 mt-1">
+                    <span class="text-5xl font-bold text-pink-500">{{ countdown.days }}</span>
+                    <span class="text-2xl font-medium">天</span>
+                    <span class="text-4xl font-bold">{{ countdown.hours.toString().padStart(2,'0') }}:{{ countdown.minutes.toString().padStart(2,'0') }}:{{ countdown.seconds.toString().padStart(2,'0') }}</span>
                 </div>
             </div>
-            <i class="fas fa-plane text-6xl text-pink-300"></i>
+            <i class="fas fa-plane text-5xl text-pink-300"></i>
         </div>
         <div class="mt-6 h-3 bg-white/60 rounded-3xl overflow-hidden relative">
             <div class="h-full bg-gradient-to-r from-pink-400 to-rose-400 transition-all" :style="{ width: countdown.progress + '%' }"></div>
@@ -297,7 +297,7 @@ body::before {
         <div class="text-center text-xs text-pink-500 mt-4">2026年05月10日 上午07:50 出發</div>
     </div>
 
-    <!-- 其餘出發前準備內容（完全保留你原本代碼） -->
+    <!-- 其餘出發前準備內容 -->
     <div class="bg-gradient-to-r from-pink-400 to-rose-400 text-white rounded-3xl p-8 text-center shadow-xl">
         <h1 class="text-3xl font-bold mb-2">✈️ 香港國際機場出發詳細行程計劃</h1>
         <div class="inline-block bg-white/20 px-8 py-2 rounded-3xl text-lg font-semibold">
@@ -373,7 +373,7 @@ body::before {
     </div>
 </div>
 
-<!-- 新增支出 Modal -->
+<!-- Modal 部分（完整保留） -->
 <div v-if="showAddModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
     <div class="bg-white rounded-3xl w-full max-w-[380px] mx-4 p-5 shadow-2xl">
         <h3 class="text-2xl font-semibold text-pink-700 mb-6 flex items-center gap-2"><i class="fas fa-plus"></i> 新增支出</h3>
