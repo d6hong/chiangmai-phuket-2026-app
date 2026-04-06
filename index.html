@@ -57,7 +57,7 @@
             </div>
         </div>
 
-        <!-- Tab 導航 -->
+        <!-- Tab 導航（新增「出發前準備」） -->
         <div class="flex border-b sticky top-[73px] z-50 bg-white">
             <button @click="currentTab = 'itinerary'" 
                     :class="{ 'border-b-4 border-emerald-500 text-emerald-600': currentTab === 'itinerary' }"
@@ -68,6 +68,9 @@
             <button @click="currentTab = 'rates'" 
                     :class="{ 'border-b-4 border-emerald-500 text-emerald-600': currentTab === 'rates' }"
                     class="flex-1 py-4 font-medium text-lg">實時匯率</button>
+            <button @click="currentTab = 'departure'" 
+                    :class="{ 'border-b-4 border-emerald-500 text-emerald-600': currentTab === 'departure' }"
+                    class="flex-1 py-4 font-medium text-lg">出發前準備</button>
         </div>
 
         <!-- 行程表 Tab -->
@@ -243,93 +246,117 @@
                     </div>
                 </div>
             </div>
-            <!-- 最後更新時間（已強制顯示 + 正確格式） -->
             <div class="text-center text-xs text-emerald-500">
                 最後更新：{{ lastUpdateTime }}<br>
                 (數據每小時自動更新一次)
             </div>
         </div>
 
-        <!-- 新增支出 Modal -->
-        <div v-if="showAddModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
-            <div class="bg-white rounded-3xl w-full max-w-[380px] mx-4 p-5 shadow-2xl">
-                <h3 class="text-2xl font-semibold text-emerald-800 mb-6 flex items-center gap-2">
-                    <i class="fas fa-plus"></i> 新增支出
-                </h3>
-                <div class="space-y-5">
-                    <div>
-                        <label class="block text-sm text-emerald-600 mb-1">日期</label>
-                        <input v-model="newRecord.date" type="date" 
-                               class="w-full border border-emerald-200 rounded-3xl px-4 py-3 text-base">
-                    </div>
-                    <div>
-                        <label class="block text-sm text-emerald-600 mb-1">項目名稱</label>
-                        <input v-model="newRecord.description" placeholder="例如：夜市晚餐" 
-                               class="w-full border border-emerald-200 rounded-3xl px-4 py-3">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm text-emerald-600 mb-1">金額 (THB)</label>
-                            <input v-model="newRecord.amount" type="number" placeholder="0" 
-                                   class="w-full border border-emerald-200 rounded-3xl px-4 py-3">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-emerald-600 mb-1">類別</label>
-                            <select v-model="newRecord.category" class="w-full border border-emerald-200 rounded-3xl px-4 py-3">
-                                <option value="食物">食物</option>
-                                <option value="交通">交通</option>
-                                <option value="入油">入油</option>
-                                <option value="住宿">住宿</option>
-                                <option value="娛樂">娛樂</option>
-                                <option value="購物">購物</option>
-                                <option value="其他">其他</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-emerald-600 mb-1">支付方式</label>
-                        <select v-model="newRecord.paymentMethod" class="w-full border border-emerald-200 rounded-3xl px-4 py-3">
-                            <option value="現金">現金</option>
-                            <option value="信用卡">信用卡</option>
-                            <option value="Alipay">Alipay</option>
-                            <option value="WeChat Pay">WeChat Pay</option>
-                            <option value="其他">其他</option>
-                        </select>
-                    </div>
+        <!-- 出發前準備 Tab（已整合你上傳的 HKG出發詳細行程計劃） -->
+        <div v-else-if="currentTab === 'departure'" class="p-5 space-y-8">
+
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-emerald-400 to-teal-500 text-white rounded-3xl p-8 text-center shadow-xl">
+                <h1 class="text-3xl font-bold mb-2">✈️ 香港國際機場出發詳細行程計劃</h1>
+                <div class="inline-block bg-white/20 px-8 py-2 rounded-3xl text-lg font-semibold">
+                    UO738　香港 → 清邁　｜　2026年5月10日（星期日）　｜　07:50 起飛
                 </div>
-                <div class="flex gap-3 mt-8">
-                    <button @click="showAddModal = false" class="flex-1 py-4 text-emerald-700 font-medium border border-emerald-200 rounded-3xl">取消</button>
-                    <button @click="addExpense" class="flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-3xl">確定新增</button>
+                <p class="mt-4 opacity-90">Kyra Lounge｜HK Express 真人櫃檯 check-in</p>
+            </div>
+
+            <!-- 並排比較 -->
+            <div class="grid md:grid-cols-2 gap-6">
+
+                <!-- 你的行程 -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="text-4xl">🧑🏻</span>
+                        <h2 class="text-2xl font-semibold text-emerald-800">你的行程（N29 通宵巴士）</h2>
+                        <span class="ml-auto bg-emerald-100 text-emerald-700 px-4 py-1 rounded-3xl text-sm font-medium">唐明苑站上車</span>
+                    </div>
+                    <a href="https://hkbus.app/zh/route/n29-1-tseung-kwan-o-(hong-sing-garden)-tung-chung-station/001778%2C14" target="_blank" class="text-emerald-600 flex items-center gap-2 mb-4 hover:underline">
+                        🚌 N29 巴士路線
+                    </a>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="text-left py-3 w-28">時間（估計）</th>
+                                <th class="text-left py-3">項目</th>
+                                <th class="text-left py-3">詳細行動 + 小貼士</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y text-emerald-700">
+                            <tr><td class="py-4 font-mono">03:30 – 03:40</td><td>出門去唐明苑站</td><td>拖好行李、帶齊護照、boarding pass、Trip.com App、八達通</td></tr>
+                            <tr><td class="py-4 font-mono">≈04:00 – 04:05</td><td>搭 N29</td><td>康盛花園 03:50 開，用城巴App查實時</td></tr>
+                            <tr><td class="py-4 font-mono">05:40 – 05:55</td><td>直接落一號客運大樓（北）</td><td>落車即係 T1 check-in 大堂</td></tr>
+                            <tr><td class="py-4 font-mono">05:45 – 06:15</td><td><strong>HK Express 真人櫃檯 check-in + 寄艙行李</strong></td><td>Aisle H（Row H）真人櫃檯，04:50 開始開放</td></tr>
+                            <tr><td class="py-4 font-mono">06:15 – 06:40</td><td>安檢 + 出境</td><td>15–25 分鐘</td></tr>
+                            <tr><td class="py-4 font-mono">06:30 – 06:40</td><td>入 <span class="bg-emerald-200 text-emerald-800 px-3 py-1 rounded-3xl text-xs">Kyra Lounge</span></td><td>Gate 23 附近，用 Trip.com 鑽石會員 QR Code 免費入</td></tr>
+                            <tr><td class="py-4 font-mono">06:40 – 07:10</td><td>貴賓室休息</td><td>食早餐、沖涼、休息<br><strong>最遲 07:10 出門</strong></td></tr>
+                            <tr><td class="py-4 font-mono">07:10 – 07:20</td><td>行去 boarding gate</td><td>行 5–10 分鐘</td></tr>
+                            <tr><td class="py-4 font-mono">07:20</td><td>登機閘關閉</td><td>07:50 起飛</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- chanb 的行程 -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="text-4xl">👶🏻</span>
+                        <h2 class="text-2xl font-semibold text-emerald-800">chanb 的行程（NA37 龍運巴士）</h2>
+                        <span class="ml-auto bg-emerald-100 text-emerald-700 px-4 py-1 rounded-3xl text-sm font-medium">天晴邨晴雲樓站上車</span>
+                    </div>
+                    <a href="https://hkbus.app/zh/route/na37-1-tin-shui-wai-town-centre-cathay-city/D7F4AE9D52F68682%2C3" target="_blank" class="text-emerald-600 flex items-center gap-2 mb-4 hover:underline">
+                        🚌 NA37 巴士路線
+                    </a>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="text-left py-3 w-28">時間（估計）</th>
+                                <th class="text-left py-3">項目</th>
+                                <th class="text-left py-3">詳細行動 + 小貼士</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y text-emerald-700">
+                            <tr><td class="py-4 font-mono">03:10 – 03:20</td><td>出門去天晴邨晴雲樓站</td><td>拖好行李、帶齊護照、boarding pass、Trip.com App、八達通</td></tr>
+                            <tr><td class="py-4 font-mono">≈03:40 – 03:50</td><td>搭 NA37</td><td>天水圍市中心 03:25 / 03:45 開，用龍運App查實時</td></tr>
+                            <tr><td class="py-4 font-mono">05:20 – 05:40</td><td>直接落一號客運大樓附近</td><td>落車行 1–2 分鐘入 T1</td></tr>
+                            <tr><td class="py-4 font-mono">05:25 – 05:50</td><td><strong>HK Express 真人櫃檯 check-in + 寄艙行李</strong></td><td>Aisle H（Row H）真人櫃檯，04:50 開始開放</td></tr>
+                            <tr><td class="py-4 font-mono">05:50 – 06:10</td><td>安檢 + 出境</td><td>15–25 分鐘</td></tr>
+                            <tr><td class="py-4 font-mono">06:00 – 06:10</td><td>入 <span class="bg-emerald-200 text-emerald-800 px-3 py-1 rounded-3xl text-xs">Kyra Lounge</span></td><td>Gate 23 附近，用 App 買 pass（HK$173）</td></tr>
+                            <tr><td class="py-4 font-mono">06:10 – 07:10</td><td>貴賓室休息</td><td>食早餐、沖涼、休息<br><strong>最遲 07:10 出門</strong></td></tr>
+                            <tr><td class="py-4 font-mono">07:10 – 07:20</td><td>行去 boarding gate</td><td>行 5–10 分鐘</td></tr>
+                            <tr><td class="py-4 font-mono">07:20</td><td>登機閘關閉</td><td>07:50 起飛</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
 
-        <!-- 自訂匯率 Modal -->
-        <div v-if="showRateModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
-            <div class="bg-white rounded-3xl w-full max-w-[380px] mx-4 p-6 shadow-2xl">
-                <h3 class="text-2xl font-semibold text-emerald-800 mb-6 flex items-center gap-2">
-                    <i class="fas fa-exchange-alt"></i> 自訂實際兌換率
+            <!-- 會合建議 -->
+            <div class="bg-emerald-100 border border-emerald-200 rounded-3xl p-8 text-center">
+                <strong class="text-emerald-700 text-xl">💡 會合建議</strong><br>
+                你同 chanb 大約 05:40–05:55 同時到達 T1 check-in 大堂<br>
+                可以約埋一齊去 Aisle H 真人櫃檯 check-in + 寄袋，之後一齊入 Kyra Lounge 食早餐！
+            </div>
+
+            <!-- 貴賓室資訊 -->
+            <div class="bg-white rounded-3xl p-8 shadow-sm">
+                <h3 class="text-2xl font-semibold text-emerald-800 mb-6 flex items-center gap-3">
+                    🌟 Kyra Lounge 真實特色
                 </h3>
-                <div class="space-y-6">
-                    <div class="flex items-center justify-center gap-6 text-3xl">
-                        <div class="text-center">
-                            <span class="text-4xl">🇭🇰</span><br>
-                            1 HKD
-                        </div>
-                        <div class="text-emerald-400 text-5xl">≈</div>
-                        <div class="flex-1">
-                            <input v-model="tempRate" type="number" step="0.01" 
-                                   class="w-full text-center text-4xl font-bold border border-emerald-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-emerald-500">
-                            <div class="text-center text-emerald-500 mt-1">泰銖 ฿</div>
-                        </div>
-                    </div>
-                    <p class="text-xs text-center text-emerald-600">輸入你到時實際兌換的匯率<br>（會覆蓋自動匯率，用於所有旅費計算）</p>
+                <p class="text-emerald-700">現代奢華設計 + 大落地窗 + 豐富早餐 + 酒吧區，曾獲2025年亞太區最佳貴賓室獎。</p>
+                <div class="grid grid-cols-2 gap-6 mt-8 text-sm">
+                    <div>✅ 現代奢華設計 + 大落地窗近距離觀機 + 山景</div>
+                    <div>✅ 豐富自助餐：港式熱食、西式冷盤、沙律、炸物、湯品、甜點</div>
+                    <div>✅ 酒吧區：啤酒、紅白酒 + 招牌調酒</div>
+                    <div>✅ 淋浴間 + 舒適座位 + 充足充電位</div>
                 </div>
-                <div class="flex gap-3 mt-8">
-                    <button @click="showRateModal = false" class="flex-1 py-4 text-emerald-700 font-medium border border-emerald-200 rounded-3xl">取消</button>
-                    <button @click="saveCustomRate" class="flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-3xl">儲存自訂匯率</button>
-                </div>
-                <button @click="clearCustomRate" class="text-xs text-red-400 mt-4 w-full">清除自訂匯率（恢復自動）</button>
+            </div>
+
+            <div class="text-center text-xs text-emerald-500 mt-10">
+                計劃已更新真人櫃檯 + Kyra Lounge 位置 + 巴士路線連結<br>
+                出門前再用 App 確認一次實時班次<br>
+                安全飛行，清邁玩得開心～ ✈️
             </div>
         </div>
     </div>
@@ -360,7 +387,7 @@
                     rates: { THB: 4.17 },
                     customRate: null,
                     tempRate: 4.17,
-                    lastUpdateTime: '',   // 初始為空，mounted 會立即填入
+                    lastUpdateTime: '',
                     newRecord: {
                         date: new Date().toISOString().slice(0,10),
                         description: '',
@@ -545,9 +572,6 @@
             },
             watch: {
                 currentTab(newTab) {
-                    if (newTab === 'rates') {
-                        this.$nextTick(() => this.updateLastUpdateTime());
-                    }
                     if (newTab === 'accounting') {
                         this.$nextTick(() => this.updateExpenseChart());
                     }
@@ -651,23 +675,14 @@
                         }
                     });
                 },
-                getCurrentTime() {
-                    const now = new Date();
-                    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-                },
-                updateLastUpdateTime() {
-                    this.lastUpdateTime = this.getCurrentTime();
-                },
                 async fetchRates() {
                     try {
                         const res = await fetch('https://api.exchangerate.host/latest?base=HKD&symbols=THB');
                         const data = await res.json();
                         this.rates.THB = data.rates.THB;
-                    } catch(e) {
-                        console.log('匯率 API 暫時無法取得，使用上次數值');
-                    }
-                    // 無論成功或失敗，都更新時間
-                    this.updateLastUpdateTime();
+                        const now = new Date();
+                        this.lastUpdateTime = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+                    } catch(e) {}
                 },
                 saveCustomRate() {
                     this.customRate = parseFloat(this.tempRate);
@@ -684,8 +699,7 @@
             },
             mounted() {
                 this.loadExpenses();
-                this.updateLastUpdateTime();   // ← 立即顯示時間
-                this.fetchRates();            // ← 再去拉最新匯率並更新時間
+                this.fetchRates();
             }
         }).mount('#app')
     </script>
