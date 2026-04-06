@@ -176,10 +176,9 @@
                 </div>
             </div>
 
-            <!-- 兩個圖表並排：圓餅圖 + 支出折線圖 -->
+            <!-- 兩個圖表並排 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
-                <!-- 支出統計圓餅圖 -->
+                <!-- 圓餅圖 -->
                 <div class="bg-white rounded-3xl p-6 shadow-sm">
                     <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-emerald-800">
                         <i class="fas fa-chart-pie"></i> 支出統計（按類別）
@@ -193,7 +192,7 @@
                     </div>
                 </div>
 
-                <!-- 新增：支出折線圖（按日期） -->
+                <!-- 折線圖 -->
                 <div class="bg-white rounded-3xl p-6 shadow-sm">
                     <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-emerald-800">
                         <i class="fas fa-chart-line"></i> 支出折線圖（按日期）
@@ -485,7 +484,7 @@
                         paymentMethod: '現金'
                     },
                     expenseChart: null,
-                    expenseLineChart: null,   // 新增折線圖實例
+                    expenseLineChart: null,
                     days: [
                         { date: "2026-05-10", dayNumber: "10", dateStr: "5月10日", displayDate: "5月10日（星期日）", title: "抵達 + TM30 + 租車 + 午餐 + 真心市集 + 帕尼帕診所 + 塔佩門週日夜市 + Relax Express按摩", flight: { departure: "07:50", arrival: "09:45", from: "HKG", to: "CNX", number: "UO738" }, activities: [ { time: "07:50-09:45", activity: "UO738 HKG→CNX 抵達機場", ride: "Grab/Taxi 20分鐘", note: "取行李" }, { time: "10:00-11:30", activity: "Proud Phu Fah check-in + TM30", ride: "0km（酒店內）", note: "超快" }, { time: "11:30-12:00", activity: "Grab/步行去 Tawan Bike 租 ADV 160", ride: "10-15分鐘 / 5km", note: "雙頭盔+鎖" }, { time: "12:00-13:00", activity: "午餐（Tawan Bike附近）", ride: "—", note: "輕鬆食Khao Soi" }, { time: "13:00-13:15", activity: "騎車去 真心市集（Jing Jai Market）", ride: "10-15分鐘 / 6-8km", note: "週日市集最後時段" }, { time: "13:15-15:00", activity: "真心市集逛手作 + 有機食物 + 咖啡 + 影相", ride: "園內短途", note: "抓緊時間，3點前主要攤檔收" }, { time: "15:00-15:15", activity: "騎車去 帕尼帕診所 ปณิภาคลินิก", ride: "10分鐘 / 3-5km", note: "同一區，超方便" }, { time: "15:15-18:00", activity: "古城自由探索（Wat Phra Singh + Chedi Luang）", ride: "隨意短途（總20-30km）", note: "慢慢玩" }, { time: "18:00-21:00", activity: "塔佩門週日夜市（Tha Phae Gate Sunday Walking Street）", ride: "步行或1分鐘", note: "週日限定5pm-11pm，超熱鬧浪漫！" }, { time: "21:00-22:30", activity: "Relax Express@Chiangmai Gate 按摩", ride: "10-15分鐘 / 5km", note: "搭飛機後超舒服" }, { time: "22:30-22:45", activity: "返酒店", ride: "10-15分鐘 / 5km", note: "休息" } ] },
                         { date: "2026-05-11", dayNumber: "11", dateStr: "5月11日", displayDate: "5月11日（星期一）", title: "Theory Class Day 1 + 素帖寺（Doi Suthep Temple）夜景", activities: [ { time: "07:00-07:45", activity: "酒店出發去Driving School", ride: "30-45分鐘 / 15-20km", note: "準時8am" }, { time: "08:00-18:00", activity: "Theory Class 全日", ride: "—", note: "跟學校時間" }, { time: "18:15-19:00", activity: "騎車去 素帖寺（Doi Suthep Temple）", ride: "30-45分鐘 / 15km", note: "晚上燈光超美" }, { time: "19:00-20:30", activity: "素帖寺 + 觀景台 + 敲鐘", ride: "園內2km", note: "夜景一流" }, { time: "晚上", activity: "Night Bazaar食飯 + 按摩", ride: "5-10分鐘", note: "慶祝Theory pass" } ] },
@@ -533,21 +532,36 @@
                     return colorMap[category] || '#C9CBCF';
                 },
                 addExpense() {
-                    if (!this.newRecord.description || this.newRecord.amount <= 0) { alert('請填寫項目名稱同金額呀～'); return; }
+                    if (!this.newRecord.description || this.newRecord.amount <= 0) { 
+                        alert('請填寫項目名稱同金額呀～'); 
+                        return; 
+                    }
                     const newExpense = { id: Date.now(), ...this.newRecord };
-                    this.expenses.unshift(newExpense);
-                    db.ref('expenses').push(newExpense);
+                    this.expenses.unshift(newExpense);           // 先本地即時顯示
+                    db.ref('expenses').push(newExpense);         // 同步到 Firebase
+
                     this.showAddModal = false;
-                    this.newRecord = { date: new Date().toISOString().slice(0,10), description: '', amount: 0, category: '食物', paymentMethod: '現金' };
+                    this.newRecord = { 
+                        date: new Date().toISOString().slice(0,10), 
+                        description: '', 
+                        amount: 0, 
+                        category: '食物', 
+                        paymentMethod: '現金' 
+                    };
+
+                    // === 關鍵：立即更新兩個圖表，無需重新整理 ===
                     this.updateExpenseChart();
                     this.updateExpenseLineChart();
-                    alert('✅ 已保存並同步到雲端！其他裝置會即時更新完整紀錄。');
+
+                    alert('✅ 已即時更新圖表並同步到雲端！其他裝置會即時看到最新紀錄同圖表。');
                 },
                 deleteExpense(id) {
                     if (confirm('確定刪除呢筆支出？')) {
                         this.expenses = this.expenses.filter(e => e.id !== id);
                         db.ref('expenses').once('value', snapshot => {
-                            snapshot.forEach(child => { if (child.val().id === id) child.ref.remove(); });
+                            snapshot.forEach(child => { 
+                                if (child.val().id === id) child.ref.remove(); 
+                            });
                         });
                         this.updateExpenseChart();
                         this.updateExpenseLineChart();
@@ -587,7 +601,6 @@
                         }
                     });
                 },
-                // 新增：支出折線圖（按日期）
                 updateExpenseLineChart() {
                     const canvas = document.getElementById('expenseLineChart');
                     if (!canvas) return;
@@ -599,7 +612,6 @@
                         dateTotals[date] = (dateTotals[date] || 0) + (parseFloat(exp.amount) || 0);
                     });
 
-                    // 排序日期
                     const sortedDates = Object.keys(dateTotals).sort();
                     const dataValues = sortedDates.map(date => dateTotals[date]);
 
@@ -621,10 +633,7 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: true,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { callbacks: { label: ctx => ctx.raw + ' THB' } }
-                            },
+                            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' THB' } } },
                             scales: {
                                 y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
                                 x: { grid: { color: '#f1f5f9' } }
