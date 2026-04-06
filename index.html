@@ -47,8 +47,8 @@
                 </div>
             </div>
             
-            <!-- 簡化後的匯率顯示 -->
-            <div @click="showRateModal = true" 
+            <!-- 右上角自定義匯率（已加強 @click） -->
+            <div @click="openRateModal" 
                  class="text-right cursor-pointer hover:bg-white/10 px-4 py-2 rounded-3xl transition-colors">
                 <div class="text-xs bg-white/20 px-4 py-1 rounded-3xl flex items-center gap-1">
                     <span class="font-bold">HKD ≈ {{ customRate || rates.THB ? (customRate || rates.THB).toFixed(2) : '—' }} ฿</span>
@@ -161,7 +161,8 @@
                 <h2 class="text-2xl font-semibold text-emerald-800 flex items-center gap-2">
                     <i class="fas fa-receipt"></i> 旅費管理
                 </h2>
-                <button @click="showAddModal = true" 
+                <!-- 新增支出按鈕（已加強 @click） -->
+                <button @click="openAddModal" 
                         class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-3xl flex items-center gap-2 text-sm font-medium shadow-lg active:scale-95">
                     <i class="fas fa-plus"></i> 新增支出
                 </button>
@@ -246,16 +247,15 @@
                     </div>
                 </div>
             </div>
+            <!-- 最後更新時間（已強制顯示） -->
             <div class="text-center text-xs text-emerald-500">
                 最後更新：{{ lastUpdateTime }}<br>
                 (數據每小時自動更新一次)
             </div>
         </div>
 
-        <!-- 出發前準備 Tab（已完整整合你上傳的 HTML） -->
+        <!-- 出發前準備 Tab -->
         <div v-else-if="currentTab === 'departure'" class="p-5 space-y-8">
-
-            <!-- Header -->
             <div class="bg-gradient-to-r from-emerald-400 to-teal-500 text-white rounded-3xl p-8 text-center shadow-xl">
                 <h1 class="text-3xl font-bold mb-2">✈️ 香港國際機場出發詳細行程計劃</h1>
                 <div class="inline-block bg-white/20 px-8 py-2 rounded-3xl text-lg font-semibold">
@@ -264,10 +264,7 @@
                 <p class="mt-4 opacity-90">Kyra Lounge｜HK Express 真人櫃檯 check-in</p>
             </div>
 
-            <!-- 並排比較 -->
             <div class="grid md:grid-cols-2 gap-6">
-
-                <!-- 你的行程 -->
                 <div class="bg-white rounded-3xl p-6 shadow-sm">
                     <div class="flex items-center gap-3 mb-6">
                         <span class="text-4xl">🧑🏻</span>
@@ -299,7 +296,6 @@
                     </table>
                 </div>
 
-                <!-- chanb 的行程 -->
                 <div class="bg-white rounded-3xl p-6 shadow-sm">
                     <div class="flex items-center gap-3 mb-6">
                         <span class="text-4xl">👶🏻</span>
@@ -332,14 +328,12 @@
                 </div>
             </div>
 
-            <!-- 會合建議 -->
             <div class="bg-emerald-100 border border-emerald-200 rounded-3xl p-8 text-center">
                 <strong class="text-emerald-700 text-xl">💡 會合建議</strong><br>
                 你同 chanb 大約 05:40–05:55 同時到達 T1 check-in 大堂<br>
                 可以約埋一齊去 Aisle H 真人櫃檯 check-in + 寄袋，之後一齊入 Kyra Lounge 食早餐！
             </div>
 
-            <!-- 貴賓室資訊 -->
             <div class="bg-white rounded-3xl p-8 shadow-sm">
                 <h3 class="text-2xl font-semibold text-emerald-800 mb-6 flex items-center gap-3">
                     🌟 Kyra Lounge 真實特色
@@ -357,6 +351,85 @@
                 計劃已更新真人櫃檯 + Kyra Lounge 位置 + 巴士路線連結<br>
                 出門前再用 App 確認一次實時班次<br>
                 安全飛行，清邁玩得開心～ ✈️
+            </div>
+        </div>
+
+        <!-- 新增支出 Modal -->
+        <div v-if="showAddModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
+            <div class="bg-white rounded-3xl w-full max-w-[380px] mx-4 p-5 shadow-2xl">
+                <h3 class="text-2xl font-semibold text-emerald-800 mb-6 flex items-center gap-2">
+                    <i class="fas fa-plus"></i> 新增支出
+                </h3>
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm text-emerald-600 mb-1">日期</label>
+                        <input v-model="newRecord.date" type="date" class="w-full border border-emerald-200 rounded-3xl px-4 py-3 text-base">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-emerald-600 mb-1">項目名稱</label>
+                        <input v-model="newRecord.description" placeholder="例如：夜市晚餐" class="w-full border border-emerald-200 rounded-3xl px-4 py-3">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-emerald-600 mb-1">金額 (THB)</label>
+                            <input v-model="newRecord.amount" type="number" placeholder="0" class="w-full border border-emerald-200 rounded-3xl px-4 py-3">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-emerald-600 mb-1">類別</label>
+                            <select v-model="newRecord.category" class="w-full border border-emerald-200 rounded-3xl px-4 py-3">
+                                <option value="食物">食物</option>
+                                <option value="交通">交通</option>
+                                <option value="入油">入油</option>
+                                <option value="住宿">住宿</option>
+                                <option value="娛樂">娛樂</option>
+                                <option value="購物">購物</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-emerald-600 mb-1">支付方式</label>
+                        <select v-model="newRecord.paymentMethod" class="w-full border border-emerald-200 rounded-3xl px-4 py-3">
+                            <option value="現金">現金</option>
+                            <option value="信用卡">信用卡</option>
+                            <option value="Alipay">Alipay</option>
+                            <option value="WeChat Pay">WeChat Pay</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button @click="showAddModal = false" class="flex-1 py-4 text-emerald-700 font-medium border border-emerald-200 rounded-3xl">取消</button>
+                    <button @click="addExpense" class="flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-3xl">確定新增</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 自訂匯率 Modal -->
+        <div v-if="showRateModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
+            <div class="bg-white rounded-3xl w-full max-w-[380px] mx-4 p-6 shadow-2xl">
+                <h3 class="text-2xl font-semibold text-emerald-800 mb-6 flex items-center gap-2">
+                    <i class="fas fa-exchange-alt"></i> 自訂實際兌換率
+                </h3>
+                <div class="space-y-6">
+                    <div class="flex items-center justify-center gap-6 text-3xl">
+                        <div class="text-center">
+                            <span class="text-4xl">🇭🇰</span><br>
+                            1 HKD
+                        </div>
+                        <div class="text-emerald-400 text-5xl">≈</div>
+                        <div class="flex-1">
+                            <input v-model="tempRate" type="number" step="0.01" class="w-full text-center text-4xl font-bold border border-emerald-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-emerald-500">
+                            <div class="text-center text-emerald-500 mt-1">泰銖 ฿</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-center text-emerald-600">輸入你到時實際兌換的匯率<br>（會覆蓋自動匯率，用於所有旅費計算）</p>
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button @click="showRateModal = false" class="flex-1 py-4 text-emerald-700 font-medium border border-emerald-200 rounded-3xl">取消</button>
+                    <button @click="saveCustomRate" class="flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-3xl">儲存自訂匯率</button>
+                </div>
+                <button @click="clearCustomRate" class="text-xs text-red-400 mt-4 w-full">清除自訂匯率（恢復自動）</button>
             </div>
         </div>
     </div>
@@ -397,170 +470,21 @@
                     },
                     expenseChart: null,
                     days: [
-                        {
-                            date: "2026-05-10", dayNumber: "10", dateStr: "5月10日", displayDate: "5月10日（星期日）",
-                            title: "抵達 + TM30 + 租車 + 午餐 + 真心市集 + 帕尼帕診所 + 塔佩門週日夜市 + Relax Express按摩",
-                            flight: { departure: "07:50", arrival: "09:45", from: "HKG", to: "CNX", number: "UO738" },
-                            activities: [
-                                { time: "07:50-09:45", activity: "UO738 HKG→CNX 抵達機場", ride: "Grab/Taxi 20分鐘", note: "取行李" },
-                                { time: "10:00-11:30", activity: "Proud Phu Fah check-in + TM30", ride: "0km（酒店內）", note: "超快" },
-                                { time: "11:30-12:00", activity: "Grab/步行去 Tawan Bike 租 ADV 160", ride: "10-15分鐘 / 5km", note: "雙頭盔+鎖" },
-                                { time: "12:00-13:00", activity: "午餐（Tawan Bike附近）", ride: "—", note: "輕鬆食Khao Soi" },
-                                { time: "13:00-13:15", activity: "騎車去 真心市集（Jing Jai Market）", ride: "10-15分鐘 / 6-8km", note: "週日市集最後時段" },
-                                { time: "13:15-15:00", activity: "真心市集逛手作 + 有機食物 + 咖啡 + 影相", ride: "園內短途", note: "抓緊時間，3點前主要攤檔收" },
-                                { time: "15:00-15:15", activity: "騎車去 帕尼帕診所 ปณิภาคลินิก", ride: "10分鐘 / 3-5km", note: "同一區，超方便" },
-                                { time: "15:15-18:00", activity: "古城自由探索（Wat Phra Singh + Chedi Luang）", ride: "隨意短途（總20-30km）", note: "慢慢玩" },
-                                { time: "18:00-21:00", activity: "塔佩門週日夜市（Tha Phae Gate Sunday Walking Street）", ride: "步行或1分鐘", note: "週日限定5pm-11pm，超熱鬧浪漫！" },
-                                { time: "21:00-22:30", activity: "Relax Express@Chiangmai Gate 按摩", ride: "10-15分鐘 / 5km", note: "搭飛機後超舒服" },
-                                { time: "22:30-22:45", activity: "返酒店", ride: "10-15分鐘 / 5km", note: "休息" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-11", dayNumber: "11", dateStr: "5月11日", displayDate: "5月11日（星期一）",
-                            title: "Theory Class Day 1 + 素帖寺（Doi Suthep Temple）夜景",
-                            activities: [
-                                { time: "07:00-07:45", activity: "酒店出發去Driving School", ride: "30-45分鐘 / 15-20km", note: "準時8am" },
-                                { time: "08:00-18:00", activity: "Theory Class 全日", ride: "—", note: "跟學校時間" },
-                                { time: "18:15-19:00", activity: "騎車去 素帖寺（Doi Suthep Temple）", ride: "30-45分鐘 / 15km", note: "晚上燈光超美" },
-                                { time: "19:00-20:30", activity: "素帖寺 + 觀景台 + 敲鐘", ride: "園內2km", note: "夜景一流" },
-                                { time: "晚上", activity: "Night Bazaar食飯 + 按摩", ride: "5-10分鐘", note: "慶祝Theory pass" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-12", dayNumber: "12", dateStr: "5月12日", displayDate: "5月12日（星期二）",
-                            title: "Driving Test Day 2 + 慶祝輕鬆日 + Calm Massage and Spa",
-                            activities: [
-                                { time: "07:00-07:45", activity: "酒店出發去Driving School", ride: "30-45分鐘 / 15-20km", note: "準時8am" },
-                                { time: "08:00-16:00", activity: "Driving Test 全日", ride: "—", note: "跟學校時間" },
-                                { time: "16:30-17:30", activity: "返古城慶祝逛街 + 購物", ride: "30-45分鐘 / 15-20km", note: "終於考完！" },
-                                { time: "18:00-21:00", activity: "Night Bazaar食飯 + 逛街", ride: "步行", note: "輕鬆慶祝" },
-                                { time: "21:00-22:30", activity: "Calm Massage and Spa at Chiang Mai Gate 按摩", ride: "5-10分鐘 / 3km", note: "1.5小時全身按摩，最relax！" },
-                                { time: "22:30-22:45", activity: "返酒店", ride: "10分鐘", note: "休息" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-13", dayNumber: "13", dateStr: "5月13日", displayDate: "5月13日（星期三）",
-                            title: "假期全日 因他農山國家公園（Doi Inthanon National Park）",
-                            activities: [
-                                { time: "07:30", activity: "酒店出發（加滿油、帶外套+雨衣+水）", ride: "—", note: "早出發" },
-                                { time: "07:30-10:00", activity: "酒店 → Chom Thong → 公園入口", ride: "2.5-3小時 / 100km", note: "平路+上山" },
-                                { time: "10:00-10:30", activity: "瓦奇拉坦瀑布（Wachirathan Waterfall）", ride: "20-30分鐘 / 20km", note: "大瀑布拍照" },
-                                { time: "10:30-11:00", activity: "西里坦瀑布（Sirithan Waterfall）", ride: "15分鐘 / 10km", note: "遊客少" },
-                                { time: "11:00-12:30", activity: "湄克朗隆卡倫村午餐", ride: "20分鐘 / 15km", note: "烤雞+糯米" },
-                                { time: "12:30-13:30", activity: "皇家雙塔（King & Queen Pagodas）", ride: "15-20分鐘 / 8km", note: "金塔全景" },
-                                { time: "13:30-14:30", activity: "因他農山頂 + 安卡自然步道", ride: "短途", note: "山頂雲霧" },
-                                { time: "14:30-16:00", activity: "克美潘自然步道（K線主力）", ride: "步行2-3小時", note: "雲海森林（最靚！）" },
-                                { time: "16:00-18:30", activity: "下山 + 返酒店", ride: "2-2.5小時 / 100km", note: "避雨" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-14", dayNumber: "14", dateStr: "5月14日", displayDate: "5月14日（星期四）",
-                            title: "早上DLT領證 + 班康瓦特藝術村 + 沙孟環線 + 美林溫泉",
-                            activities: [
-                                { time: "08:15-08:30", activity: "酒店準備 + 出發", ride: "—", note: "帶齊文件" },
-                                { time: "08:30-09:00", activity: "騎車去 清邁交通部（DLT Maehia）", ride: "30-40分鐘 / 15km", note: "準時9am到" },
-                                { time: "09:00-10:00", activity: "DLT領證", ride: "—", note: "🎉 泰國駕照到手！" },
-                                { time: "10:00-10:30", activity: "附近午餐慶祝", ride: "—", note: "超開心" },
-                                { time: "10:30-12:30", activity: "騎車去 班康瓦特藝術村（Baan Kang Wat Art Village）", ride: "40-50分鐘 / 25km", note: "免費入場" },
-                                { time: "12:30-14:30", activity: "藝術村自由逛 + 喝咖啡 + 影相", ride: "園內短途", note: "最浪漫拍照點！" },
-                                { time: "14:30-17:00", activity: "沙孟環線（Samoeng Loop）", ride: "2.5-3小時 / 80km", note: "從藝術村出發超順路" },
-                                { time: "17:00-17:45", activity: "美林溫泉泡溫泉", ride: "15-20分鐘 / 10km", note: "超relax" },
-                                { time: "晚上", activity: "Night Market大餐慶祝", ride: "45分鐘返", note: "拿牌紀念日！" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-15", dayNumber: "15", dateStr: "5月15日", displayDate: "5月15日（星期五）",
-                            title: "Pai Day 1：清邁 → 拜縣（Pai）",
-                            activities: [
-                                { time: "07:00", activity: "酒店出發", ride: "—", note: "精神最好" },
-                                { time: "07:00-11:00", activity: "清邁 → 拜縣（Pai）", ride: "3.5-4小時 / 130km（762彎）", note: "超刺激" },
-                                { time: "11:00-12:00", activity: "check-in The Quarter Pai + 午餐", ride: "—", note: "位置超方便" },
-                                { time: "13:00-15:00", activity: "拜縣大峽谷（Pai Canyon） + 吊橋", ride: "短途10km", note: "影相" },
-                                { time: "15:00-16:30", activity: "竹橋 + 拜縣溫泉", ride: "短途", note: "玩水" },
-                                { time: "18:00-22:00", activity: "Walking Street夜市", ride: "步行", note: "週末最浪漫！" },
-                                { time: "晚上", activity: "返The Quarter Pai休息", ride: "步行5分鐘", note: "—" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-16", dayNumber: "16", dateStr: "5月16日", displayDate: "5月16日（星期六）",
-                            title: "Pai Day 2：拜縣全日探索 + 返清邁",
-                            activities: [
-                                { time: "08:00-09:30", activity: "雲來觀景台（Yun Lai Viewpoint）", ride: "45-60分鐘 / 20km", note: "早去人少" },
-                                { time: "09:30-13:00", activity: "咖啡園 + 瀑布 + 自由騎", ride: "短途30km", note: "慢慢玩" },
-                                { time: "13:00-15:30", activity: "Memoria Bridge + 熱氣球場等", ride: "隨意短途", note: "影靚相" },
-                                { time: "15:30-16:00", activity: "check-out The Quarter Pai", ride: "—", note: "—" },
-                                { time: "16:00-20:00", activity: "拜縣 → 清邁返酒店", ride: "3.5-4小時 / 130km", note: "下午出發避夜路" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-17", dayNumber: "17", dateStr: "5月17日", displayDate: "5月17日（星期日）",
-                            title: "黏黏瀑布 + 清邁大峽谷 + 雞籠蒸SPA",
-                            activities: [
-                                { time: "08:00-09:30", activity: "酒店 → 黏黏瀑布（Bua Tong Sticky Waterfall）", ride: "1.5-2小時 / 60km", note: "早去" },
-                                { time: "09:30-12:00", activity: "黏黏瀑布踩水玩", ride: "園內", note: "超好玩" },
-                                { time: "13:00-13:30", activity: "去 清邁大峽谷（Grand Canyon Chiang Mai）", ride: "20-30分鐘 / 15km", note: "—" },
-                                { time: "13:30-16:00", activity: "清邁大峽谷影相 + 跳水", ride: "短途", note: "夕陽" },
-                                { time: "16:00-17:00", activity: "騎車返古城", ride: "45分鐘 / 25km", note: "—" },
-                                { time: "18:00-20:30", activity: "雞籠蒸SPA（Sense Garden Massage & Spa）", ride: "步行或5分鐘", note: "需提前預約，超relax！" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-18", dayNumber: "18", dateStr: "5月18日", displayDate: "5月18日（星期一）",
-                            title: "美甘朋村 + 歐布汗國家公園",
-                            activities: [
-                                { time: "08:00-09:30", activity: "酒店 → 美甘朋村（Mae Kampong Village） + 多級瀑布", ride: "1-1.5小時 / 40km", note: "村莊體驗" },
-                                { time: "09:30-12:00", activity: "村莊 + 瀑布玩水", ride: "短途", note: "chill" },
-                                { time: "13:00-14:00", activity: "去 歐布汗國家公園（Ob Khan National Park）", ride: "45-60分鐘 / 30km", note: "—" },
-                                { time: "14:00-17:00", activity: "峽谷影相 + 游水 + trail", ride: "園內", note: "靚相" },
-                                { time: "晚上", activity: "返酒店泳池chill", ride: "30-45分鐘 / 26km", note: "準備飛" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-19", dayNumber: "19", dateStr: "5月19日", displayDate: "5月19日（星期二）",
-                            title: "清邁最後 + 飛布吉",
-                            flight: { departure: "14:35", arrival: "16:40", from: "CNX", to: "HKT", number: "PG248" },
-                            activities: [
-                                { time: "上午", activity: "酒店check-out + 自由時間", ride: "—", note: "重溫最愛" },
-                                { time: "中午", activity: "Grab去CNX機場", ride: "30分鐘", note: "—" },
-                                { time: "下午", activity: "PG248 CNX→HKT", ride: "—", note: "飛布吉" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-20", dayNumber: "20", dateStr: "5月20日", displayDate: "5月20日（星期三）",
-                            title: "布吉 Day 1：抵達 + 酒店 Chill",
-                            activities: [
-                                { time: "全日", activity: "Niranapa Resort 休息 + 海灘", ride: "—", note: "放空" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-21", dayNumber: "21", dateStr: "5月21日", displayDate: "5月21日（星期四）",
-                            title: "布吉 Day 2：Big Buddha + 老街",
-                            activities: [
-                                { time: "全日", activity: "Big Buddha + Phuket Old Town", ride: "—", note: "拍照" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-22", dayNumber: "22", dateStr: "5月22日", displayDate: "5月22日（星期五）",
-                            title: "布吉 Day 3：海島跳島遊",
-                            activities: [
-                                { time: "全日", activity: "跳島遊", ride: "—", note: "船上" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-23", dayNumber: "23", dateStr: "5月23日", displayDate: "5月23日（星期六）",
-                            title: "布吉 Day 4：自由日 + 夜市",
-                            activities: [
-                                { time: "全日", activity: "海灘 + 夜市", ride: "—", note: "最後放鬆" }
-                            ]
-                        },
-                        {
-                            date: "2026-05-24", dayNumber: "24", dateStr: "5月24日", displayDate: "5月24日（星期日）",
-                            title: "返香港",
-                            flight: { departure: "11:15", arrival: "16:00", from: "HKT", to: "HKG", number: "UO725" },
-                            activities: [
-                                { time: "上午", activity: "退房 + 飛HKG", ride: "—", note: "結束愉快旅程" }
-                            ]
-                        }
+                        { date: "2026-05-10", dayNumber: "10", dateStr: "5月10日", displayDate: "5月10日（星期日）", title: "抵達 + TM30 + 租車 + 午餐 + 真心市集 + 帕尼帕診所 + 塔佩門週日夜市 + Relax Express按摩", flight: { departure: "07:50", arrival: "09:45", from: "HKG", to: "CNX", number: "UO738" }, activities: [ { time: "07:50-09:45", activity: "UO738 HKG→CNX 抵達機場", ride: "Grab/Taxi 20分鐘", note: "取行李" }, { time: "10:00-11:30", activity: "Proud Phu Fah check-in + TM30", ride: "0km（酒店內）", note: "超快" }, { time: "11:30-12:00", activity: "Grab/步行去 Tawan Bike 租 ADV 160", ride: "10-15分鐘 / 5km", note: "雙頭盔+鎖" }, { time: "12:00-13:00", activity: "午餐（Tawan Bike附近）", ride: "—", note: "輕鬆食Khao Soi" }, { time: "13:00-13:15", activity: "騎車去 真心市集（Jing Jai Market）", ride: "10-15分鐘 / 6-8km", note: "週日市集最後時段" }, { time: "13:15-15:00", activity: "真心市集逛手作 + 有機食物 + 咖啡 + 影相", ride: "園內短途", note: "抓緊時間，3點前主要攤檔收" }, { time: "15:00-15:15", activity: "騎車去 帕尼帕診所 ปณิภาคลินิก", ride: "10分鐘 / 3-5km", note: "同一區，超方便" }, { time: "15:15-18:00", activity: "古城自由探索（Wat Phra Singh + Chedi Luang）", ride: "隨意短途（總20-30km）", note: "慢慢玩" }, { time: "18:00-21:00", activity: "塔佩門週日夜市（Tha Phae Gate Sunday Walking Street）", ride: "步行或1分鐘", note: "週日限定5pm-11pm，超熱鬧浪漫！" }, { time: "21:00-22:30", activity: "Relax Express@Chiangmai Gate 按摩", ride: "10-15分鐘 / 5km", note: "搭飛機後超舒服" }, { time: "22:30-22:45", activity: "返酒店", ride: "10-15分鐘 / 5km", note: "休息" } ] },
+                        { date: "2026-05-11", dayNumber: "11", dateStr: "5月11日", displayDate: "5月11日（星期一）", title: "Theory Class Day 1 + 素帖寺（Doi Suthep Temple）夜景", activities: [ { time: "07:00-07:45", activity: "酒店出發去Driving School", ride: "30-45分鐘 / 15-20km", note: "準時8am" }, { time: "08:00-18:00", activity: "Theory Class 全日", ride: "—", note: "跟學校時間" }, { time: "18:15-19:00", activity: "騎車去 素帖寺（Doi Suthep Temple）", ride: "30-45分鐘 / 15km", note: "晚上燈光超美" }, { time: "19:00-20:30", activity: "素帖寺 + 觀景台 + 敲鐘", ride: "園內2km", note: "夜景一流" }, { time: "晚上", activity: "Night Bazaar食飯 + 按摩", ride: "5-10分鐘", note: "慶祝Theory pass" } ] },
+                        { date: "2026-05-12", dayNumber: "12", dateStr: "5月12日", displayDate: "5月12日（星期二）", title: "Driving Test Day 2 + 慶祝輕鬆日 + Calm Massage and Spa", activities: [ { time: "07:00-07:45", activity: "酒店出發去Driving School", ride: "30-45分鐘 / 15-20km", note: "準時8am" }, { time: "08:00-16:00", activity: "Driving Test 全日", ride: "—", note: "跟學校時間" }, { time: "16:30-17:30", activity: "返古城慶祝逛街 + 購物", ride: "30-45分鐘 / 15-20km", note: "終於考完！" }, { time: "18:00-21:00", activity: "Night Bazaar食飯 + 逛街", ride: "步行", note: "輕鬆慶祝" }, { time: "21:00-22:30", activity: "Calm Massage and Spa at Chiang Mai Gate 按摩", ride: "5-10分鐘 / 3km", note: "1.5小時全身按摩，最relax！" }, { time: "22:30-22:45", activity: "返酒店", ride: "10分鐘", note: "休息" } ] },
+                        { date: "2026-05-13", dayNumber: "13", dateStr: "5月13日", displayDate: "5月13日（星期三）", title: "假期全日 因他農山國家公園（Doi Inthanon National Park）", activities: [ { time: "07:30", activity: "酒店出發（加滿油、帶外套+雨衣+水）", ride: "—", note: "早出發" }, { time: "07:30-10:00", activity: "酒店 → Chom Thong → 公園入口", ride: "2.5-3小時 / 100km", note: "平路+上山" }, { time: "10:00-10:30", activity: "瓦奇拉坦瀑布（Wachirathan Waterfall）", ride: "20-30分鐘 / 20km", note: "大瀑布拍照" }, { time: "10:30-11:00", activity: "西里坦瀑布（Sirithan Waterfall）", ride: "15分鐘 / 10km", note: "遊客少" }, { time: "11:00-12:30", activity: "湄克朗隆卡倫村午餐", ride: "20分鐘 / 15km", note: "烤雞+糯米" }, { time: "12:30-13:30", activity: "皇家雙塔（King & Queen Pagodas）", ride: "15-20分鐘 / 8km", note: "金塔全景" }, { time: "13:30-14:30", activity: "因他農山頂 + 安卡自然步道", ride: "短途", note: "山頂雲霧" }, { time: "14:30-16:00", activity: "克美潘自然步道（K線主力）", ride: "步行2-3小時", note: "雲海森林（最靚！）" }, { time: "16:00-18:30", activity: "下山 + 返酒店", ride: "2-2.5小時 / 100km", note: "避雨" } ] },
+                        { date: "2026-05-14", dayNumber: "14", dateStr: "5月14日", displayDate: "5月14日（星期四）", title: "早上DLT領證 + 班康瓦特藝術村 + 沙孟環線 + 美林溫泉", activities: [ { time: "08:15-08:30", activity: "酒店準備 + 出發", ride: "—", note: "帶齊文件" }, { time: "08:30-09:00", activity: "騎車去 清邁交通部（DLT Maehia）", ride: "30-40分鐘 / 15km", note: "準時9am到" }, { time: "09:00-10:00", activity: "DLT領證", ride: "—", note: "🎉 泰國駕照到手！" }, { time: "10:00-10:30", activity: "附近午餐慶祝", ride: "—", note: "超開心" }, { time: "10:30-12:30", activity: "騎車去 班康瓦特藝術村（Baan Kang Wat Art Village）", ride: "40-50分鐘 / 25km", note: "免費入場" }, { time: "12:30-14:30", activity: "藝術村自由逛 + 喝咖啡 + 影相", ride: "園內短途", note: "最浪漫拍照點！" }, { time: "14:30-17:00", activity: "沙孟環線（Samoeng Loop）", ride: "2.5-3小時 / 80km", note: "從藝術村出發超順路" }, { time: "17:00-17:45", activity: "美林溫泉泡溫泉", ride: "15-20分鐘 / 10km", note: "超relax" }, { time: "晚上", activity: "Night Market大餐慶祝", ride: "45分鐘返", note: "拿牌紀念日！" } ] },
+                        { date: "2026-05-15", dayNumber: "15", dateStr: "5月15日", displayDate: "5月15日（星期五）", title: "Pai Day 1：清邁 → 拜縣（Pai）", activities: [ { time: "07:00", activity: "酒店出發", ride: "—", note: "精神最好" }, { time: "07:00-11:00", activity: "清邁 → 拜縣（Pai）", ride: "3.5-4小時 / 130km（762彎）", note: "超刺激" }, { time: "11:00-12:00", activity: "check-in The Quarter Pai + 午餐", ride: "—", note: "位置超方便" }, { time: "13:00-15:00", activity: "拜縣大峽谷（Pai Canyon） + 吊橋", ride: "短途10km", note: "影相" }, { time: "15:00-16:30", activity: "竹橋 + 拜縣溫泉", ride: "短途", note: "玩水" }, { time: "18:00-22:00", activity: "Walking Street夜市", ride: "步行", note: "週末最浪漫！" }, { time: "晚上", activity: "返The Quarter Pai休息", ride: "步行5分鐘", note: "—" } ] },
+                        { date: "2026-05-16", dayNumber: "16", dateStr: "5月16日", displayDate: "5月16日（星期六）", title: "Pai Day 2：拜縣全日探索 + 返清邁", activities: [ { time: "08:00-09:30", activity: "雲來觀景台（Yun Lai Viewpoint）", ride: "45-60分鐘 / 20km", note: "早去人少" }, { time: "09:30-13:00", activity: "咖啡園 + 瀑布 + 自由騎", ride: "短途30km", note: "慢慢玩" }, { time: "13:00-15:30", activity: "Memoria Bridge + 熱氣球場等", ride: "隨意短途", note: "影靚相" }, { time: "15:30-16:00", activity: "check-out The Quarter Pai", ride: "—", note: "—" }, { time: "16:00-20:00", activity: "拜縣 → 清邁返酒店", ride: "3.5-4小時 / 130km", note: "下午出發避夜路" } ] },
+                        { date: "2026-05-17", dayNumber: "17", dateStr: "5月17日", displayDate: "5月17日（星期日）", title: "黏黏瀑布 + 清邁大峽谷 + 雞籠蒸SPA", activities: [ { time: "08:00-09:30", activity: "酒店 → 黏黏瀑布（Bua Tong Sticky Waterfall）", ride: "1.5-2小時 / 60km", note: "早去" }, { time: "09:30-12:00", activity: "黏黏瀑布踩水玩", ride: "園內", note: "超好玩" }, { time: "13:00-13:30", activity: "去 清邁大峽谷（Grand Canyon Chiang Mai）", ride: "20-30分鐘 / 15km", note: "—" }, { time: "13:30-16:00", activity: "清邁大峽谷影相 + 跳水", ride: "短途", note: "夕陽" }, { time: "16:00-17:00", activity: "騎車返古城", ride: "45分鐘 / 25km", note: "—" }, { time: "18:00-20:30", activity: "雞籠蒸SPA（Sense Garden Massage & Spa）", ride: "步行或5分鐘", note: "需提前預約，超relax！" } ] },
+                        { date: "2026-05-18", dayNumber: "18", dateStr: "5月18日", displayDate: "5月18日（星期一）", title: "美甘朋村 + 歐布汗國家公園", activities: [ { time: "08:00-09:30", activity: "酒店 → 美甘朋村（Mae Kampong Village） + 多級瀑布", ride: "1-1.5小時 / 40km", note: "村莊體驗" }, { time: "09:30-12:00", activity: "村莊 + 瀑布玩水", ride: "短途", note: "chill" }, { time: "13:00-14:00", activity: "去 歐布汗國家公園（Ob Khan National Park）", ride: "45-60分鐘 / 30km", note: "—" }, { time: "14:00-17:00", activity: "峽谷影相 + 游水 + trail", ride: "園內", note: "靚相" }, { time: "晚上", activity: "返酒店泳池chill", ride: "30-45分鐘 / 26km", note: "準備飛" } ] },
+                        { date: "2026-05-19", dayNumber: "19", dateStr: "5月19日", displayDate: "5月19日（星期二）", title: "清邁最後 + 飛布吉", flight: { departure: "14:35", arrival: "16:40", from: "CNX", to: "HKT", number: "PG248" }, activities: [ { time: "上午", activity: "酒店check-out + 自由時間", ride: "—", note: "重溫最愛" }, { time: "中午", activity: "Grab去CNX機場", ride: "30分鐘", note: "—" }, { time: "下午", activity: "PG248 CNX→HKT", ride: "—", note: "飛布吉" } ] },
+                        { date: "2026-05-20", dayNumber: "20", dateStr: "5月20日", displayDate: "5月20日（星期三）", title: "布吉 Day 1：抵達 + 酒店 Chill", activities: [ { time: "全日", activity: "Niranapa Resort 休息 + 海灘", ride: "—", note: "放空" } ] },
+                        { date: "2026-05-21", dayNumber: "21", dateStr: "5月21日", displayDate: "5月21日（星期四）", title: "布吉 Day 2：Big Buddha + 老街", activities: [ { time: "全日", activity: "Big Buddha + Phuket Old Town", ride: "—", note: "拍照" } ] },
+                        { date: "2026-05-22", dayNumber: "22", dateStr: "5月22日", displayDate: "5月22日（星期五）", title: "布吉 Day 3：海島跳島遊", activities: [ { time: "全日", activity: "跳島遊", ride: "—", note: "船上" } ] },
+                        { date: "2026-05-23", dayNumber: "23", dateStr: "5月23日", displayDate: "5月23日（星期六）", title: "布吉 Day 4：自由日 + 夜市", activities: [ { time: "全日", activity: "海灘 + 夜市", ride: "—", note: "最後放鬆" } ] },
+                        { date: "2026-05-24", dayNumber: "24", dateStr: "5月24日", displayDate: "5月24日（星期日）", title: "返香港", flight: { departure: "11:15", arrival: "16:00", from: "HKT", to: "HKG", number: "UO725" }, activities: [ { time: "上午", activity: "退房 + 飛HKG", ride: "—", note: "結束愉快旅程" } ] }
                     ]
                 }
             },
@@ -575,38 +499,26 @@
                     if (newTab === 'accounting') {
                         this.$nextTick(() => this.updateExpenseChart());
                     }
+                    if (newTab === 'rates') {
+                        this.$nextTick(() => this.fetchRates());
+                    }
                 }
             },
             methods: {
                 selectDay(index) { this.selectedDayIndex = index; },
+                openAddModal() { this.showAddModal = true; },
+                openRateModal() { this.showRateModal = true; },
                 getCategoryColor(category) {
-                    const colorMap = {
-                        '食物': '#FF6384',
-                        '交通': '#36A2EB',
-                        '入油': '#FFCE56',
-                        '住宿': '#4BC0C0',
-                        '娛樂': '#9966FF',
-                        '購物': '#FF9F40',
-                        '其他': '#C9CBCF'
-                    };
+                    const colorMap = { '食物': '#FF6384', '交通': '#36A2EB', '入油': '#FFCE56', '住宿': '#4BC0C0', '娛樂': '#9966FF', '購物': '#FF9F40', '其他': '#C9CBCF' };
                     return colorMap[category] || '#C9CBCF';
                 },
                 addExpense() {
-                    if (!this.newRecord.description || this.newRecord.amount <= 0) {
-                        alert('請填寫項目名稱同金額呀～');
-                        return;
-                    }
+                    if (!this.newRecord.description || this.newRecord.amount <= 0) { alert('請填寫項目名稱同金額呀～'); return; }
                     const newExpense = { id: Date.now(), ...this.newRecord };
                     this.expenses.unshift(newExpense);
                     db.ref('expenses').push(newExpense);
                     this.showAddModal = false;
-                    this.newRecord = {
-                        date: new Date().toISOString().slice(0,10),
-                        description: '',
-                        amount: 0,
-                        category: '食物',
-                        paymentMethod: '現金'
-                    };
+                    this.newRecord = { date: new Date().toISOString().slice(0,10), description: '', amount: 0, category: '食物', paymentMethod: '現金' };
                     this.updateExpenseChart();
                     alert('✅ 已保存並同步到雲端！其他裝置會即時更新完整紀錄。');
                 },
@@ -614,9 +526,7 @@
                     if (confirm('確定刪除呢筆支出？')) {
                         this.expenses = this.expenses.filter(e => e.id !== id);
                         db.ref('expenses').once('value', snapshot => {
-                            snapshot.forEach(child => {
-                                if (child.val().id === id) child.ref.remove();
-                            });
+                            snapshot.forEach(child => { if (child.val().id === id) child.ref.remove(); });
                         });
                         this.updateExpenseChart();
                     }
@@ -624,9 +534,7 @@
                 loadExpenses() {
                     db.ref('expenses').on('value', snapshot => {
                         const loaded = [];
-                        snapshot.forEach(child => {
-                            loaded.unshift(child.val());
-                        });
+                        snapshot.forEach(child => { loaded.unshift(child.val()); });
                         this.expenses = loaded;
                         this.updateExpenseChart();
                     });
@@ -635,41 +543,22 @@
                     const canvas = document.getElementById('expenseChart');
                     if (!canvas) return;
                     if (this.expenseChart) this.expenseChart.destroy();
-
                     const categoryTotals = {};
                     this.expenses.forEach(exp => {
                         const cat = exp.category || '其他';
                         categoryTotals[cat] = (categoryTotals[cat] || 0) + (parseFloat(exp.amount) || 0);
                     });
-
                     const labels = Object.keys(categoryTotals);
                     const data = Object.values(categoryTotals);
                     const colors = labels.map(label => this.getCategoryColor(label));
-
                     this.expenseChart = new Chart(canvas, {
                         type: 'pie',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                data: data,
-                                backgroundColor: colors,
-                                borderColor: '#ffffff',
-                                borderWidth: 4
-                            }]
-                        },
+                        data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderColor: '#ffffff', borderWidth: 4 }] },
                         options: {
                             responsive: true,
                             maintainAspectRatio: true,
                             plugins: {
-                                legend: { 
-                                    position: 'bottom', 
-                                    labels: { 
-                                        boxWidth: 12, 
-                                        padding: 15, 
-                                        font: { size: 13 },
-                                        usePointStyle: true
-                                    } 
-                                },
+                                legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 13 }, usePointStyle: true } },
                                 tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.raw + ' THB' } }
                             }
                         }
@@ -680,9 +569,9 @@
                         const res = await fetch('https://api.exchangerate.host/latest?base=HKD&symbols=THB');
                         const data = await res.json();
                         this.rates.THB = data.rates.THB;
-                        const now = new Date();
-                        this.lastUpdateTime = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
                     } catch(e) {}
+                    const now = new Date();
+                    this.lastUpdateTime = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
                 },
                 saveCustomRate() {
                     this.customRate = parseFloat(this.tempRate);
