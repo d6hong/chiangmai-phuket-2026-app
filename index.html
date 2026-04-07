@@ -4,10 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>2026 Chiang Mai Phuket</title>
+
 <link rel="apple-touch-icon" href="web%20app%20icon.jpg">
 <link rel="icon" type="image/jpeg" href="web%20app%20icon.jpg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ThaiTrip">
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
@@ -45,8 +47,8 @@ body::before {
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
 /* --- iPhone 原生 Bottom Sheet 彈出視窗過場 --- */
-.modal-overlay-enter-active { animation: fadeIn 0.3s ease-out forwards; }
-.modal-overlay-leave-active { animation: fadeOut 0.3s ease-in forwards; }
+.modal-overlay-enter-active { animation: fadeIn 0.25s ease-out forwards; }
+.modal-overlay-leave-active { animation: fadeOut 0.25s ease-in forwards; }
 .modal-overlay-enter-active .modal-content { animation: slideUp 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
 .modal-overlay-leave-active .modal-content { animation: slideDown 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
 
@@ -54,10 +56,14 @@ body::before {
 @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes slideDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+
+/* 針對內容卡片嘅上浮載入動畫 */
+@keyframes slideUpFade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+.animate-slide-up { animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 </style>
 </head>
 <body class="min-h-screen pb-8 text-[#3A302A]">
-<div id="app" class="max-w-2xl mx-auto bg-[#FFF9E6] min-h-screen shadow-2xl sm:rounded-3xl overflow-hidden">
+<div id="app" class="max-w-2xl mx-auto bg-[#FFF9E6] min-h-screen shadow-2xl sm:rounded-3xl overflow-hidden relative">
 
 <div class="bg-[#F7B32B] text-white px-4 py-4 sm:px-6 sm:py-5 flex items-center justify-between sticky top-0 z-50 shadow-md">
     <div class="flex items-center gap-2 sm:gap-3 overflow-hidden pr-2">
@@ -69,7 +75,7 @@ body::before {
     </div>
     <div @click="openRateModal" class="flex-shrink-0 text-right cursor-pointer hover:bg-white/20 px-2 py-1.5 rounded-2xl transition-colors">
         <div class="text-[11px] sm:text-xs bg-white/25 px-2 sm:px-4 py-1.5 rounded-full flex items-center justify-center gap-1 shadow-inner whitespace-nowrap">
-            <span class="font-bold text-[#A8201A]">HKD ≈ {{ (customRate || rates.THB) ? (customRate || rates.THB).toFixed(2) : '—' }} ฿</span>
+            <span class="font-bold text-[#A8201A]">HKD ≈ {{ currentRateDisplay }} ฿</span>
         </div>
         <div class="text-[9px] sm:text-[10px] text-white/90 mt-1 font-medium text-center">修改匯率</div>
     </div>
@@ -83,7 +89,8 @@ body::before {
 </div>
 
 <transition name="fade" mode="out-in">
-    <div v-if="currentTab === 'itinerary'" key="itinerary" class="p-4 sm:p-5">
+    
+    <div v-if="currentTab === 'itinerary'" key="itinerary" class="p-4 sm:p-5 animate-slide-up">
         <h2 class="text-xl sm:text-2xl font-black mb-4 sm:mb-5 flex items-center gap-2 text-[#A8201A]"><i class="fas fa-calendar-alt text-[#F7B32B]"></i> 14日旅行日程</h2>
         <div class="flex gap-3 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory">
             <div v-for="(day, index) in days" :key="day.date" @click="selectDay(index)" class="day-card min-w-[88px] bg-white rounded-3xl shadow-sm border border-[#F5E6CC] p-3 text-center snap-center cursor-pointer flex-shrink-0" :class="{ selected: selectedDayIndex === index }">
@@ -154,7 +161,7 @@ body::before {
         </div>
     </div>
 
-    <div v-else-if="currentTab === 'accounting'" key="accounting" class="p-4 sm:p-5 space-y-5 sm:space-y-6">
+    <div v-else-if="currentTab === 'accounting'" key="accounting" class="p-4 sm:p-5 space-y-5 sm:space-y-6 animate-slide-up">
         <div class="flex justify-between items-center">
             <h2 class="text-xl sm:text-2xl font-black text-[#A8201A] flex items-center gap-2">
                 <i class="fas fa-receipt text-[#F7B32B]"></i> 旅費管理
@@ -175,11 +182,7 @@ body::before {
                 <div class="flex justify-between items-center mb-3 sm:mb-4">
                     <div class="text-[#A8201A] font-bold text-sm sm:text-base">總支出</div>
                     <div v-if="totalBudget" class="text-[10px] sm:text-xs font-black px-3 py-1 sm:py-1.5 rounded-full shadow-inner"
-                        :class="{
-                            'bg-[#D4EDDA] text-[#155724]': usagePercent < 80,
-                            'bg-[#FFF3CD] text-[#856404]': usagePercent >= 80 && usagePercent < 100,
-                            'bg-[#F8D7DA] text-[#721C24]': usagePercent >= 100
-                        }">
+                        :class="{ 'bg-[#D4EDDA] text-[#155724]': usagePercent < 80, 'bg-[#FFF3CD] text-[#856404]': usagePercent >= 80 && usagePercent < 100, 'bg-[#F8D7DA] text-[#721C24]': usagePercent >= 100 }">
                         {{ usagePercent.toFixed(0) }}% 已用
                     </div>
                 </div>
@@ -194,11 +197,7 @@ body::before {
                     </div>
                     <div class="h-3 sm:h-4 bg-[#FFF9E6] border border-[#F5E6CC] rounded-full overflow-hidden shadow-inner">
                         <div class="h-full transition-all duration-500 ease-out"
-                            :class="{
-                                'bg-[#F7B32B]': usagePercent < 80,
-                                'bg-[#F9A03F]': usagePercent >= 80 && usagePercent < 100,
-                                'bg-[#A8201A]': usagePercent >= 100
-                            }"
+                            :class="{ 'bg-[#F7B32B]': usagePercent < 80, 'bg-[#F9A03F]': usagePercent >= 80 && usagePercent < 100, 'bg-[#A8201A]': usagePercent >= 100 }"
                             :style="{ width: Math.min(usagePercent, 100) + '%' }"></div>
                     </div>
                     <div class="text-[11px] sm:text-xs text-[#B89B7E] mt-2 font-bold">設定總預算：{{ totalBudget.toLocaleString() }} HKD</div>
@@ -241,14 +240,14 @@ body::before {
                 <div class="flex-1">
                     <div class="font-black text-base sm:text-lg text-[#3A302A]">{{ expense.description }}</div>
                     <div class="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-2 mt-1 sm:mt-2 font-bold">
-                        <span class="text-[#A8201A] bg-[#FFF9E6] px-1.5 sm:px-2 py-1 rounded-md">{{ expense.date.substring(5) }}</span>
+                        <span class="text-[#A8201A] bg-[#FFF9E6] px-1.5 sm:px-2 py-1 rounded-md">{{ expense.date ? expense.date.substring(5) : '未知日期' }}</span>
                         <span :style="{ backgroundColor: getCategoryColor(expense.category) }" class="px-1.5 sm:px-2 py-1 text-white rounded-md text-[9px] sm:text-[10px] shadow-sm uppercase tracking-wider">{{ expense.category }}</span>
                         <span class="text-[#7D6B5D] hidden sm:inline"><i class="fas fa-wallet mr-1"></i>{{ expense.paymentMethod }}</span>
                     </div>
                 </div>
                 <div class="text-right">
                     <div class="font-black text-xl sm:text-2xl text-[#3A302A]">-{{ expense.amount }} <span class="text-xs sm:text-sm text-[#F7B32B]">THB</span></div>
-                    <div class="text-[10px] sm:text-xs font-bold text-[#A8201A] mt-0.5 sm:mt-1">≈ {{ Math.round(expense.amount / currentRate) }} HKD</div>
+                    <div class="text-[10px] sm:text-xs font-bold text-[#A8201A] mt-0.5 sm:mt-1">≈ {{ Math.round((expense.amount || 0) / (currentRate || 1)) }} HKD</div>
                 </div>
                 <button @click="deleteExpense(expense.id)" class="ml-3 sm:ml-5 text-[#D1C8B8] hover:text-[#A8201A] transition-colors p-2 bg-[#FFF9E6] rounded-full hover:bg-red-50">
                     <i class="fas fa-trash-alt"></i>
@@ -263,7 +262,7 @@ body::before {
         </div>
     </div>
 
-    <div v-else-if="currentTab === 'rates'" key="rates" class="p-4 sm:p-5">
+    <div v-else-if="currentTab === 'rates'" key="rates" class="p-4 sm:p-5 animate-slide-up">
         <h2 class="text-xl sm:text-2xl font-black mb-5 sm:mb-6 flex items-center gap-2 text-[#A8201A]"><i class="fas fa-exchange-alt text-[#F7B32B]"></i> 實時匯率計算</h2>
         <div class="bg-white border-2 border-[#F7B32B]/30 rounded-3xl p-6 sm:p-8 shadow-lg mb-6 sm:mb-8 relative overflow-hidden">
             <div class="absolute -right-5 -bottom-5 text-[#F7B32B] opacity-10 text-9xl"><i class="fas fa-globe-asia"></i></div>
@@ -291,28 +290,30 @@ body::before {
         </div>
 
         <div class="bg-white rounded-3xl shadow-md border border-[#F5E6CC] overflow-hidden">
-            <div class="p-4 sm:p-5 bg-[#FFF2D1] border-b border-[#F5E6CC] flex items-center">
-                <div class="w-8 h-8 rounded-full bg-[#F7B32B] text-white flex items-center justify-center mr-3 shadow-sm">
-                    <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+            <div class="p-4 sm:p-5 bg-[#FFF2D1] border-b border-[#F5E6CC] flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full bg-[#F7B32B] text-white flex items-center justify-center mr-3 shadow-sm">
+                        <i class="fa-solid fa-chart-line text-sm"></i>
+                    </div>
+                    <h3 class="font-black text-[#A8201A] text-sm sm:text-base">過去5日真實匯率 (THB/HKD)</h3>
                 </div>
-                <h3 class="font-black text-[#A8201A] text-sm sm:text-base">歷史匯率記錄 (THB/HKD)</h3>
+                <span v-if="historicalRates.length === 0" class="text-xs text-[#B89B7E] animate-pulse">載入中...</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-xs sm:text-sm text-left text-[#3A302A]">
                     <thead class="text-[10px] sm:text-xs text-[#A8201A] bg-white uppercase border-b-2 border-[#F7B32B]/20">
                         <tr>
                             <th class="px-4 sm:px-5 py-3 font-black">日期</th>
-                            <th class="px-3 py-3 text-center font-black">12 AM</th>
-                            <th class="px-3 py-3 text-center font-black">8 AM</th>
-                            <th class="px-3 py-3 text-center font-black">4 PM</th>
+                            <th class="px-3 py-3 text-center font-black">收市匯率 (THB)</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-[#F5E6CC]">
+                        <tr v-if="historicalRates.length === 0">
+                            <td colspan="2" class="text-center py-6 text-[#B89B7E] font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> 正在向 API 獲取真實數據...</td>
+                        </tr>
                         <tr v-for="record in historicalRates" :key="record.date" class="hover:bg-[#FFF9E6]/50 transition-colors">
                             <td class="px-4 sm:px-5 py-3.5 font-bold text-[#F7B32B] whitespace-nowrap">{{ record.date }}</td>
-                            <td class="px-3 py-3.5 text-center font-medium">{{ record.t0 }}</td>
-                            <td class="px-3 py-3.5 text-center font-medium">{{ record.t8 }}</td>
-                            <td class="px-3 py-3.5 text-center font-medium">{{ record.t16 }}</td>
+                            <td class="px-3 py-3.5 text-center font-medium text-base">{{ record.rate }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -320,7 +321,7 @@ body::before {
         </div>
     </div>
 
-    <div v-else-if="currentTab === 'departure'" key="departure" class="p-4 sm:p-5 space-y-6 sm:space-y-8">
+    <div v-else-if="currentTab === 'departure'" key="departure" class="p-4 sm:p-5 space-y-6 sm:space-y-8 animate-slide-up">
         
         <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 sm:p-8 shadow-lg border border-white/50 text-center relative overflow-hidden mb-6">
             <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#F7B32B] via-[#F9A03F] to-[#A8201A]"></div>
@@ -358,14 +359,14 @@ body::before {
         <div class="bg-white rounded-3xl p-5 sm:p-8 shadow-lg border-2 border-[#F7B32B]">
             <h3 class="text-lg sm:text-2xl font-black text-[#A8201A] mb-6 sm:mb-8 flex flex-row items-center justify-between gap-1">
                 <div class="flex items-center gap-1.5 sm:gap-3 overflow-hidden">
-                    <i class="fas fa-suitcase-rolling text-[#F7B32B] text-xl sm:text-3xl flex-shrink-0"></i> 
+                    <i class="fas fa-suitcase-rolling text-[#F7B32B] text-xl sm:text-3xl flex-shrink-0"></i>
                     <span class="truncate">泰國 14 日行李</span>
                 </div>
                 <span class="text-[11px] sm:text-sm bg-gradient-to-r from-[#F7B32B] to-[#F9A03F] text-white px-2 sm:px-4 py-1 sm:py-1.5 rounded-full font-black shadow-md whitespace-nowrap flex items-center gap-1 flex-shrink-0">
                     <i class="fas fa-cloud-arrow-up"></i> 雲端同步
                 </span>
             </h3>
-            
+
             <div class="grid md:grid-cols-2 gap-6 sm:gap-10">
                 <div class="bg-[#FFF9E6]/50 p-4 sm:p-6 rounded-2xl border border-[#F5E6CC] flex flex-col">
                     <h4 class="text-base sm:text-lg font-black text-[#3A302A] mb-3 sm:mb-4 flex items-center gap-2">
@@ -376,15 +377,20 @@ body::before {
                         <div class="h-full bg-[#F7B32B] transition-all duration-300" :style="{ width: (checklistMe.filter(i=>i.done).length / checklistMe.length * 100) + '%' }"></div>
                     </div>
                     <ul class="space-y-3 sm:space-y-4 flex-1">
-                        <li v-for="(item, idx) in checklistMe" :key="idx" class="flex items-start gap-3 cursor-pointer group" @click="toggleChecklist('Me', idx)">
-                            <div class="mt-0.5 w-5 h-5 sm:w-6 sm:h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0" :class="item.done ? 'bg-[#F7B32B] border-[#F7B32B] shadow-inner scale-110' : 'border-[#D1C8B8] bg-white group-hover:border-[#F7B32B]'">
+                        <li v-for="(item, idx) in checklistMe" :key="idx" class="flex items-center gap-3 group">
+                            <div @click="toggleChecklist('Me', idx)" class="cursor-pointer mt-0.5 w-5 h-5 sm:w-6 sm:h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0" :class="item.done ? 'bg-[#F7B32B] border-[#F7B32B] shadow-inner scale-110' : 'border-[#D1C8B8] bg-white group-hover:border-[#F7B32B]'">
                                 <i v-if="item.done" class="fas fa-check text-white text-[10px] sm:text-xs"></i>
                             </div>
-                            <span class="text-xs sm:text-sm font-bold transition-all duration-200" :class="item.done ? 'text-[#B89B7E] line-through decoration-2 decoration-[#F7B32B]/50' : 'text-[#3A302A] group-hover:text-[#F7B32B]'">{{ item.text }}</span>
+                            <span @click="toggleChecklist('Me', idx)" class="cursor-pointer text-xs sm:text-sm font-bold transition-all duration-200 flex-1" :class="item.done ? 'text-[#B89B7E] line-through decoration-2 decoration-[#F7B32B]/50' : 'text-[#3A302A] group-hover:text-[#F7B32B]'">{{ item.text }}</span>
+                            
+                            <div class="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                <button @click.stop="editChecklistItem('me', idx)" class="text-[#B89B7E] hover:text-[#F7B32B] p-1"><i class="fas fa-edit"></i></button>
+                                <button @click.stop="deleteChecklistItem('me', idx)" class="text-red-300 hover:text-red-500 p-1"><i class="fas fa-trash-alt"></i></button>
+                            </div>
                         </li>
                     </ul>
                     <div class="mt-5 flex gap-2">
-                        <input type="text" v-model="newItem.me" @keyup.enter="addChecklistItem('me')" placeholder="新增個人行李..." class="flex-1 bg-white border border-[#F5E6CC] text-[#3A302A] text-xs sm:text-sm font-bold rounded-xl focus:ring-[#F7B32B] focus:border-[#F7B32B] block w-full p-2.5 shadow-sm transition-colors">
+                        <input type="text" v-model="newItem.me" @keyup.enter="addChecklistItem('me')" placeholder="新增個人行李..." class="flex-1 bg-white border border-[#F5E6CC] text-[#3A302A] text-xs sm:text-sm font-bold rounded-xl focus:ring-[#F7B32B] focus:border-[#F7B32B] block w-full p-2.5 shadow-sm transition-colors outline-none">
                         <button @click="addChecklistItem('me')" class="bg-[#F7B32B] text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-black hover:bg-[#F9A03F] active:scale-95 transition-all shadow-sm">新增</button>
                     </div>
                 </div>
@@ -398,15 +404,20 @@ body::before {
                         <div class="h-full bg-[#A8201A] transition-all duration-300" :style="{ width: (checklistChanb.filter(i=>i.done).length / checklistChanb.length * 100) + '%' }"></div>
                     </div>
                     <ul class="space-y-3 sm:space-y-4 flex-1">
-                        <li v-for="(item, idx) in checklistChanb" :key="idx" class="flex items-start gap-3 cursor-pointer group" @click="toggleChecklist('Chanb', idx)">
-                            <div class="mt-0.5 w-5 h-5 sm:w-6 sm:h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0" :class="item.done ? 'bg-[#A8201A] border-[#A8201A] shadow-inner scale-110' : 'border-[#D1C8B8] bg-white group-hover:border-[#A8201A]'">
+                        <li v-for="(item, idx) in checklistChanb" :key="idx" class="flex items-center gap-3 group">
+                            <div @click="toggleChecklist('Chanb', idx)" class="cursor-pointer mt-0.5 w-5 h-5 sm:w-6 sm:h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0" :class="item.done ? 'bg-[#A8201A] border-[#A8201A] shadow-inner scale-110' : 'border-[#D1C8B8] bg-white group-hover:border-[#A8201A]'">
                                 <i v-if="item.done" class="fas fa-check text-white text-[10px] sm:text-xs"></i>
                             </div>
-                            <span class="text-xs sm:text-sm font-bold transition-all duration-200" :class="item.done ? 'text-[#B89B7E] line-through decoration-2 decoration-[#A8201A]/50' : 'text-[#3A302A] group-hover:text-[#A8201A]'">{{ item.text }}</span>
+                            <span @click="toggleChecklist('Chanb', idx)" class="cursor-pointer text-xs sm:text-sm font-bold transition-all duration-200 flex-1" :class="item.done ? 'text-[#B89B7E] line-through decoration-2 decoration-[#A8201A]/50' : 'text-[#3A302A] group-hover:text-[#A8201A]'">{{ item.text }}</span>
+                            
+                            <div class="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                <button @click.stop="editChecklistItem('chanb', idx)" class="text-[#B89B7E] hover:text-[#F7B32B] p-1"><i class="fas fa-edit"></i></button>
+                                <button @click.stop="deleteChecklistItem('chanb', idx)" class="text-red-300 hover:text-red-500 p-1"><i class="fas fa-trash-alt"></i></button>
+                            </div>
                         </li>
                     </ul>
                     <div class="mt-5 flex gap-2">
-                        <input type="text" v-model="newItem.chanb" @keyup.enter="addChecklistItem('chanb')" placeholder="新增個人行李..." class="flex-1 bg-white border border-[#F5E6CC] text-[#3A302A] text-xs sm:text-sm font-bold rounded-xl focus:ring-[#A8201A] focus:border-[#A8201A] block w-full p-2.5 shadow-sm transition-colors">
+                        <input type="text" v-model="newItem.chanb" @keyup.enter="addChecklistItem('chanb')" placeholder="新增個人行李..." class="flex-1 bg-white border border-[#F5E6CC] text-[#3A302A] text-xs sm:text-sm font-bold rounded-xl focus:ring-[#A8201A] focus:border-[#A8201A] block w-full p-2.5 shadow-sm transition-colors outline-none">
                         <button @click="addChecklistItem('chanb')" class="bg-[#A8201A] text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-black hover:bg-[#8A1914] active:scale-95 transition-all shadow-sm">新增</button>
                     </div>
                 </div>
@@ -416,8 +427,8 @@ body::before {
 </transition>
 
 <div v-if="showAddModal" class="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
-    <transition name="fade">
-        <div v-if="showAddModal" @click="showAddModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+    <transition name="modal-overlay-fade" appear>
+        <div @click="showAddModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
     </transition>
     <transition name="modal-overlay" appear>
         <div class="modal-content bg-white w-full sm:max-w-[380px] sm:mx-4 rounded-t-[2rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-2xl border-t-4 sm:border-4 border-[#F7B32B] relative overflow-hidden z-10">
@@ -462,8 +473,8 @@ body::before {
 </div>
 
 <div v-if="showBudgetModal" class="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
-    <transition name="fade">
-        <div v-if="showBudgetModal" @click="showBudgetModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+    <transition name="modal-overlay-fade" appear>
+        <div @click="showBudgetModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
     </transition>
     <transition name="modal-overlay" appear>
         <div class="modal-content bg-white w-full sm:max-w-[380px] sm:mx-4 rounded-t-[2rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-2xl border-t-4 sm:border-4 border-[#A8201A] relative overflow-hidden z-10">
@@ -484,8 +495,8 @@ body::before {
 </div>
 
 <div v-if="showRateModal" class="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
-    <transition name="fade">
-        <div v-if="showRateModal" @click="showRateModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+    <transition name="modal-overlay-fade" appear>
+        <div @click="showRateModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
     </transition>
     <transition name="modal-overlay" appear>
         <div class="modal-content bg-white w-full sm:max-w-[380px] sm:mx-4 rounded-t-[2rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-2xl border-t-4 sm:border-4 border-[#F7B32B] relative z-10">
@@ -495,7 +506,7 @@ body::before {
                     <div class="text-center font-black text-[#3A302A]"><span class="text-3xl sm:text-4xl">🇭🇰</span><br>1</div>
                     <div class="text-[#F7B32B] text-3xl sm:text-4xl">=</div>
                     <div class="flex-1">
-                        <input v-model="tempRate" type="number" step="0.0001" class="w-full bg-white text-center text-2xl sm:text-3xl font-black border-2 border-[#F5E6CC] rounded-2xl px-2 py-3 focus:outline-none focus:border-[#F7B32B] text-[#A8201A] shadow-inner transition-colors">
+                        <input v-model="tempRate" type="number" step="0.0001" class="w-full bg-white text-center text-2xl sm:text-3xl font-black border-2 border-[#F5E6CC] rounded-2xl px-2 py-3 focus:outline-none focus:border-[#F7B32B] text-[#A8201A] shadow-inner transition-colors outline-none">
                         <div class="text-center font-bold text-[#7D6B5D] mt-2 text-xs sm:text-sm">泰銖 ฿</div>
                     </div>
                 </div>
@@ -533,7 +544,6 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 🌟 更新版專屬行李清單 🌟
 const defaultChecklistMe = [
     { text: '護照 + 身份證', done: false },
     { text: 'TDAC電子入境卡', done: false },
@@ -541,4 +551,322 @@ const defaultChecklistMe = [
     { text: '機票 + 酒店預訂單 (The Quarter/Proud Phu Fah)', done: false },
     { text: '現金 (THB+HKD) + 信用卡 (開海外簽帳)', done: false },
     { text: '電話 + 泰國 SIM/eSIM + 尿袋(大容量)', done: false },
-    { text: '充電線 x2 + 轉插 (泰國可直插Type
+    { text: '充電線 x2 + 轉插 (泰國可直插Type A/C)', done: false },
+    { text: '速乾T恤/運動衫 x6 + 長褲 x2 (保護雙腿)', done: false },
+    { text: '短褲 x3 (布吉用) + 內衣褲/襪 x10', done: false },
+    { text: '防曬/防風薄外套 (山上早晚涼)', done: false },
+    { text: '行山波鞋 (黏黏瀑布) + 拖鞋 + 泳褲', done: false },
+    { text: '兩套雨衣 (全罩) + 防水背包套', done: false },
+    { text: '全罩頭盔 + 騎行手套 + 防曬袖套', done: false },
+    { text: '車鎖 + 頭盔鎖', done: false },
+    { text: '太陽眼鏡 + GoPro/相機 + 耳機', done: false },
+    { text: '常備藥 (腸胃/止痛/暈浪丸/膠布)', done: false },
+    { text: '洗漱用品 + 隱形眼鏡/眼藥水', done: false },
+    { text: '毛巾 / 速乾毛巾', done: false },
+    { text: '防水袋 (瀑布/海灘用)', done: false },
+    { text: '防曬霜 + 蚊怕水/防蚊貼', done: false }
+];
+
+const defaultChecklistChanb = [
+    { text: '護照 + 身份證', done: false },
+    { text: 'TDAC電子入境卡', done: false },
+    { text: '旅行保險單 (包電單車意外！極重要)', done: false },
+    { text: '現金 + 信用卡 (綁定好 Grab/Bolt App)', done: false },
+    { text: '電話 + 泰國 SIM/eSIM + 尿袋', done: false },
+    { text: '充電線 + 轉插 + 輕便日用背包', done: false },
+    { text: '打卡靚衫/裙 + 長短褲 (防曬/防蚊)', done: false },
+    { text: '內衣褲/襪 x10 + 防風薄外套/冷衫', done: false },
+    { text: '舒服行路波鞋 + 拖鞋/涼鞋', done: false },
+    { text: '泳衣 x2', done: false },
+    { text: '全罩頭盔', done: false },
+    { text: '太陽眼鏡 + 太陽帽 + 防曬袖套', done: false },
+    { text: '防曬霜(SPF50+防水) + 卸妝/護膚化妝品', done: false },
+    { text: '直髮夾 / 捲髮器 (注意泰國220V電壓)', done: false },
+    { text: '女性用品 + 隱形眼鏡/眼藥水', done: false },
+    { text: '摺傘 + 環保水樽 + 濕紙巾', done: false },
+    { text: '毛巾 / 速乾毛巾', done: false },
+    { text: '防水袋 (瀑布/海灘用)', done: false },
+    { text: '防蚊水 / 防蚊貼', done: false }
+];
+
+const { createApp } = Vue;
+createApp({
+data() {
+    return {
+        currentTab: 'itinerary',
+        selectedDayIndex: 0,
+        showAddModal: false,
+        showRateModal: false,
+        showBudgetModal: false,
+        expenses: [],
+        rates: { THB: 4.1616 },
+        customRate: null,
+        totalBudget: null,
+        tempRate: 4.1616,
+        tempBudget: 25000,
+        lastUpdateTime: '',
+        countdown: { days: 0, hours: 0, minutes: 0, seconds: 0, progress: 0 },
+        newRecord: { date: getLocalISODate(), description: '', amount: '', category: '食物', paymentMethod: '現金' },
+        checklistMe: JSON.parse(JSON.stringify(defaultChecklistMe)),
+        checklistChanb: JSON.parse(JSON.stringify(defaultChecklistChanb)),
+        newItem: { me: '', chanb: '' },
+        expenseChartInst: null,
+        expenseLineChartInst: null,
+        historicalRates: [], // 將動態獲取真實數據
+        
+        days: [
+            { date: "2026-05-10", dayNumber: "10", dateStr: "5月10日", displayDate: "5月10日 (日)", title: "抵達 + 租車 + 真心市集", flight: { departure: "07:50", arrival: "09:45", from: "HKG", to: "CNX", number: "UO738" }, activities: [ { time: "09:45", activity: "抵達清邁機場", ride: "Grab 20分鐘", note: "入境攞袋" }, { time: "11:30", activity: "租 ADV 160", ride: "10分鐘", note: "雙頭盔+鎖" }, { time: "13:00", activity: "真心市集 (Jing Jai)", ride: "園內", note: "手作+咖啡" }, { time: "18:00", activity: "塔佩門週日夜市", ride: "步行", note: "限定夜市！" } ] },
+            { date: "2026-05-11", dayNumber: "11", dateStr: "5月11日", displayDate: "5月11日 (一)", title: "Theory Class + 素帖寺", activities: [ { time: "08:00", activity: "Driving School Theory", ride: "—", note: "全日上堂" }, { time: "18:15", activity: "素帖寺 (Doi Suthep)", ride: "30-45分鐘", note: "絕美夜景" } ] },
+            { date: "2026-05-12", dayNumber: "12", dateStr: "5月12日", displayDate: "5月12日 (二)", title: "Driving Test + 按摩慶祝", activities: [ { time: "08:00", activity: "Driving Test 路試", ride: "—", note: "加油！" }, { time: "18:00", activity: "Night Bazaar 慶祝", ride: "步行", note: "放鬆食大餐" } ] },
+            { date: "2026-05-13", dayNumber: "13", dateStr: "5月13日", displayDate: "5月13日 (三)", title: "因他農山國家公園", activities: [ { time: "07:30", activity: "清邁 → 公園", ride: "2.5-3小時", note: "山上氣溫涼" }, { time: "14:30", activity: "克美潘自然步道", ride: "步行", note: "絕景雲海森林" } ] },
+            { date: "2026-05-14", dayNumber: "14", dateStr: "5月14日", displayDate: "5月14日 (四)", title: "DLT領證 + 藝術村", activities: [ { time: "08:30", activity: "交通部 DLT 領證", ride: "—", note: "正式攞牌！🎉" }, { time: "10:30", activity: "班康瓦特藝術村", ride: "40分鐘", note: "文青打卡點" } ] },
+            { date: "2026-05-15", dayNumber: "15", dateStr: "5月15日", displayDate: "5月15日 (五)", title: "征服 762 彎：清邁 → 拜縣", activities: [ { time: "07:00", activity: "清邁出發 → 拜縣", ride: "3.5-4小時", note: "極致彎道體驗" }, { time: "18:00", activity: "Pai Walking Street", ride: "步行", note: "浪漫週末夜市" } ] },
+            { date: "2026-05-16", dayNumber: "16", dateStr: "5月16日", displayDate: "5月16日 (六)", title: "拜縣探索 + 返清邁", activities: [ { time: "08:00", activity: "雲來觀景台", ride: "45分鐘", note: "早去避開人潮" }, { time: "16:00", activity: "拜縣返清邁", ride: "3.5-4小時", note: "下晝起程避黑" } ] },
+            { date: "2026-05-17", dayNumber: "17", dateStr: "5月17日", displayDate: "5月17日 (日)", title: "黏黏瀑布 + 大峽谷", activities: [ { time: "08:00", activity: "黏黏瀑布", ride: "1.5小時", note: "攀爬瀑布超爽" }, { time: "13:30", activity: "清邁大峽谷", ride: "短途", note: "影相 + 跳水" } ] },
+            { date: "2026-05-18", dayNumber: "18", dateStr: "5月18日", displayDate: "5月18日 (一)", title: "美甘朋村 + 歐布汗", activities: [ { time: "08:00", activity: "美甘朋村", ride: "1小時", note: "深山村落風味" }, { time: "14:00", activity: "歐布汗國家公園", ride: "45分鐘", note: "大峽谷游水" } ] },
+            { date: "2026-05-19", dayNumber: "19", dateStr: "5月19日", displayDate: "5月19日 (二)", title: "飛往布吉島", flight: { departure: "14:35", arrival: "16:40", from: "CNX", to: "HKT", number: "PG248" }, activities: [ { time: "下午", activity: "PG248 CNX→HKT", ride: "—", note: "轉戰陽光海灘" } ] },
+            { date: "2026-05-20", dayNumber: "20", dateStr: "5月20日", displayDate: "5月20日 (三)", title: "布吉 Day 1：Resort Chill", activities: [ { time: "全日", activity: "Resort 休息 + 游水", ride: "—", note: "完全放空模式" } ] },
+            { date: "2026-05-21", dayNumber: "21", dateStr: "5月21日", displayDate: "5月21日 (四)", title: "布吉 Day 2：大佛 + 老街", activities: [ { time: "全日", activity: "Big Buddha + 舊城區", ride: "—", note: "打卡靚景" } ] },
+            { date: "2026-05-22", dayNumber: "22", dateStr: "5月22日", displayDate: "5月22日 (五)", title: "布吉 Day 3：海島跳島遊", activities: [ { time: "全日", activity: "跳島遊", ride: "—", note: "出海玩水！" } ] },
+            { date: "2026-05-23", dayNumber: "23", dateStr: "5月23日", displayDate: "5月23日 (六)", title: "布吉 Day 4：最後衝刺", activities: [ { time: "全日", activity: "海灘 + 夜市購物", ride: "—", note: "最後掃貨" } ] },
+            { date: "2026-05-24", dayNumber: "24", dateStr: "5月24日", displayDate: "5月24日 (日)", title: "回程返港", flight: { departure: "11:15", arrival: "16:00", from: "HKT", to: "HKG", number: "UO725" }, activities: [ { time: "早上", activity: "退房往機場", ride: "—", note: "結束完美旅程" } ] }
+        ]
+    }
+},
+computed: {
+    selectedDay() { return this.days[this.selectedDayIndex]; },
+    currentRateDisplay() { return Number(this.customRate || this.rates.THB || 0).toFixed(2); },
+    totalTHB() { return this.expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0); },
+    totalHKD() { return Math.round(this.totalTHB / (parseFloat(this.customRate) || this.rates.THB || 1)); },
+    usagePercent() { return this.totalBudget ? Math.min((this.totalHKD / this.totalBudget) * 100, 100) : 0; },
+    remainingBudget() { return this.totalBudget ? Math.max(this.totalBudget - this.totalHKD, 0) : 0; }
+},
+watch: {
+    currentTab(newTab) {
+        if (newTab === 'accounting') {
+            setTimeout(() => {
+                this.updateExpenseChart();
+                this.updateExpenseLineChart();
+            }, 100);
+        }
+        if (newTab === 'rates' && this.historicalRates.length === 0) {
+            this.fetchHistoricalRates();
+        }
+    }
+},
+methods: {
+    selectDay(index) { this.selectedDayIndex = index; },
+    openAddModal() { this.newRecord.date = getLocalISODate(); this.showAddModal = true; },
+    openRateModal() { this.tempRate = this.customRate || this.rates.THB; this.showRateModal = true; },
+    openBudgetModal() { this.tempBudget = this.totalBudget || 25000; this.showBudgetModal = true; },
+
+    getCategoryColor(category) {
+        const colorMap = { '食物': '#FF3366', '交通': '#2EC4B6', '入油': '#FF9F1C', '住宿': '#20A4F3', '娛樂': '#9D4EDD', '購物': '#FF6B35', '其他': '#A9B1BD' };
+        return colorMap[category] || '#A9B1BD';
+    },
+
+    /* 行李清單方法 (勾選/新增/修改/刪除) */
+    toggleChecklist(person, index) {
+        const key = person === 'Me' ? 'checklistMe' : 'checklistChanb';
+        this[key][index].done = !this[key][index].done;
+        db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
+    },
+    addChecklistItem(person) {
+        const text = this.newItem[person].trim();
+        if (!text) return;
+        if (person === 'me') { this.checklistMe.push({ text: text, done: false }); } 
+        else { this.checklistChanb.push({ text: text, done: false }); }
+        this.newItem[person] = '';
+        db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
+    },
+    editChecklistItem(person, idx) {
+        const list = person === 'me' ? this.checklistMe : this.checklistChanb;
+        const newText = prompt("修改物品名稱：", list[idx].text);
+        if (newText !== null && newText.trim() !== "") {
+            list[idx].text = newText.trim();
+            db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
+        }
+    },
+    deleteChecklistItem(person, idx) {
+        if (confirm("確定要刪除此物品嗎？")) {
+            const list = person === 'me' ? this.checklistMe : this.checklistChanb;
+            list.splice(idx, 1);
+            db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
+        }
+    },
+
+    /* 會計記帳方法 */
+    addExpense() {
+        if (!this.newRecord.description || this.newRecord.amount <= 0) { alert('請填寫項目名稱同正確金額！'); return; }
+        const newExpense = { id: Date.now(), ...this.newRecord };
+        db.ref('expenses').push(newExpense);
+        this.showAddModal = false;
+        this.newRecord = { date: getLocalISODate(), description: '', amount: '', category: '食物', paymentMethod: '現金' };
+    },
+    deleteExpense(id) {
+        if (confirm('確定刪除呢筆支出？')) {
+            db.ref('expenses').once('value', snapshot => {
+                snapshot.forEach(child => { if (child.val().id === id) child.ref.remove(); });
+            });
+        }
+    },
+    loadExpenses() {
+        db.ref('expenses').on('value', snapshot => {
+            const loaded = [];
+            snapshot.forEach(child => { loaded.unshift(child.val()); });
+            this.expenses = loaded;
+            if(this.currentTab === 'accounting'){
+                setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 100);
+            }
+        });
+    },
+
+    /* 圖表渲染方法 */
+    updateExpenseChart() {
+        this.$nextTick(() => {
+            const canvas = document.getElementById('expenseChart');
+            if (!canvas) return;
+            if (this.expenseChartInst) this.expenseChartInst.destroy();
+            const categoryTotals = {};
+            this.expenses.forEach(exp => {
+                const cat = exp.category || '其他';
+                categoryTotals[cat] = (categoryTotals[cat] || 0) + (parseFloat(exp.amount) || 0);
+            });
+            const labels = Object.keys(categoryTotals);
+            const data = Object.values(categoryTotals);
+            const colors = labels.map(label => this.getCategoryColor(label));
+            this.expenseChartInst = new Chart(canvas, {
+                type: 'doughnut',
+                data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderColor: '#ffffff', borderWidth: 4, hoverOffset: 8 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '60%',
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 12, family: "'Noto Sans TC', sans-serif", weight: 'bold' }, usePointStyle: true, color: '#3A302A' } },
+                    tooltip: { callbacks: { label: ctx => ' ' + ctx.raw + ' THB' }, titleFont: {size: 14}, bodyFont: {size: 14, weight: 'bold'} } }
+                }
+            });
+        });
+    },
+    updateExpenseLineChart() {
+        this.$nextTick(() => {
+            const canvas = document.getElementById('expenseLineChart');
+            if (!canvas) return;
+            if (this.expenseLineChartInst) this.expenseLineChartInst.destroy();
+            const dateTotals = {};
+            this.expenses.forEach(exp => {
+                const date = exp.date || '未知日期';
+                dateTotals[date] = (dateTotals[date] || 0) + (parseFloat(exp.amount) || 0);
+            });
+            const sortedDates = Object.keys(dateTotals).sort();
+            const displayLabels = sortedDates.map(date => date ? date.split('-')[2] : '');
+            const dataValues = sortedDates.map(date => dateTotals[date]);
+            this.expenseLineChartInst = new Chart(canvas, {
+                type: 'line',
+                data: { labels: displayLabels, datasets: [{ label: '每日支出', data: dataValues, borderColor: '#F7B32B', backgroundColor: 'rgba(247, 179, 43, 0.15)', borderWidth: 3, tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#A8201A', pointBorderColor: '#fff', pointBorderWidth: 2 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { title: (tooltipItems) => sortedDates[tooltipItems[0].dataIndex], label: ctx => ctx.raw + ' THB' } } }, scales: { y: { beginAtZero: true, grid: { color: '#F5E6CC' }, ticks: { color: '#7D6B5D', font: {weight: 'bold'} } }, x: { grid: { display: false }, ticks: { color: '#7D6B5D', font: {weight: 'bold'} } } } }
+            });
+        });
+    },
+
+    /* 匯率與倒數邏輯 */
+    async fetchRates() {
+        try {
+            const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/hkd.json');
+            const data = await res.json();
+            if(data && data.hkd && data.hkd.thb) { this.rates.THB = data.hkd.thb; }
+        } catch(e) {}
+        const now = new Date();
+        this.lastUpdateTime = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    },
+    
+    // 🌟 真實歷史匯率抓取 (Fawazahmed0 API) 🌟
+    async fetchHistoricalRates() {
+        this.historicalRates = [];
+        const today = new Date();
+        // 抓取過去 5 日嘅真實數據
+        for (let i = 0; i < 5; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0]; // 格式：YYYY-MM-DD
+            const displayDate = `${d.getMonth() + 1}月${d.getDate()}日`;
+            
+            try {
+                const res = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${dateStr}/v1/currencies/hkd.json`);
+                const data = await res.json();
+                if(data && data.hkd && data.hkd.thb) {
+                    this.historicalRates.push({
+                        date: displayDate,
+                        rate: data.hkd.thb.toFixed(4)
+                    });
+                }
+            } catch(e) {
+                console.error("無法載入歷史匯率", dateStr);
+            }
+        }
+    },
+
+    startCountdown() {
+        const target = new Date('2026-05-10T07:50:00+08:00').getTime();
+        setInterval(() => {
+            const now = Date.now();
+            const diff = target - now;
+            if (diff <= 0) return;
+            this.countdown.days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            this.countdown.hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            this.countdown.minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            this.countdown.seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            const totalMs = 1000 * 60 * 60 * 24 * 30;
+            this.countdown.progress = Math.max(0, Math.min(100, 100 - ((diff / totalMs) * 100)));
+        }, 1000);
+    },
+    saveCustomRate() {
+        this.showRateModal = false; // 優先關閉視窗防止卡死
+        if (this.tempRate) {
+            this.customRate = parseFloat(this.tempRate);
+            db.ref('settings/customRate').set(this.customRate);
+        }
+        if(this.currentTab === 'accounting') { setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 100); }
+    },
+    clearCustomRate() {
+        this.showRateModal = false; // 優先關閉視窗
+        this.customRate = null;
+        db.ref('settings/customRate').set(null);
+        if(this.currentTab === 'accounting') { setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 100); }
+    },
+    saveBudget() {
+        this.showBudgetModal = false;
+        if (this.tempBudget) {
+            this.totalBudget = parseFloat(this.tempBudget);
+            db.ref('settings/budget').set(this.totalBudget);
+        }
+    },
+    clearBudget() {
+        this.showBudgetModal = false;
+        this.totalBudget = null;
+        db.ref('settings/budget').set(null);
+    }
+},
+mounted() {
+    this.loadExpenses();
+    this.fetchRates();
+    this.startCountdown();
+    
+    // 修正 Firebase 同步引發嘅 Bug，純粹更新變數，唔觸發任何 UI 彈窗
+    db.ref('settings/customRate').on('value', snapshot => { 
+        this.customRate = snapshot.val(); 
+    });
+    db.ref('settings/budget').on('value', snapshot => { 
+        this.totalBudget = snapshot.val(); 
+    });
+
+    db.ref('checklist').on('value', snapshot => {
+        if(snapshot.exists()) {
+            const data = snapshot.val();
+            if(data.me) this.checklistMe = data.me;
+            if(data.chanb) this.checklistChanb = data.chanb;
+        }
+    });
+}
+}).mount('#app')
+</script>
+</body>
+</html>
