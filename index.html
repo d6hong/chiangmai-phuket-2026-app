@@ -44,29 +44,29 @@ body::before {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .flight-boarding { background: linear-gradient(135deg, #F7B32B, #F9A03F); }
 
-/* --- 升級版：Pixel / iPhone 級別極速絲滑 Tab 過場 --- */
-/* 將時間縮短至 0.15s，配合 cubic-bezier 產生微縮放及彈性效果，反應更快 */
+/* --- 🌟 再升級版：更極速、更絲滑嘅 iPhone/Pixel 級別 Tab 過場 --- */
+/* 將時間縮減至 0.12s，配合微小縮放與位移，操作會非常跟手 */
 .fade-enter-active, .fade-leave-active { 
-    transition: opacity 0.15s ease-out, transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1); 
+    transition: opacity 0.12s ease-out, transform 0.12s cubic-bezier(0.25, 0.8, 0.25, 1); 
 }
 .fade-enter-from { 
     opacity: 0; 
-    transform: scale(0.97) translateY(5px); 
+    transform: scale(0.99) translateY(8px); 
 }
 .fade-leave-to { 
     opacity: 0; 
-    transform: scale(0.97) translateY(-5px); 
+    transform: scale(0.99) translateY(-8px); 
 }
 
 /* --- Bottom Sheet (底部彈窗) 專用過場 --- */
 .modal-overlay-enter-active { animation: fadeIn 0.2s ease-out forwards; }
 .modal-overlay-leave-active { animation: fadeOut 0.2s ease-in forwards; }
-.modal-overlay-enter-active .modal-content { animation: slideUp 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
-.modal-overlay-leave-active .modal-content { animation: slideDown 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
+.modal-overlay-enter-active .modal-content { animation: slideUp 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
+.modal-overlay-leave-active .modal-content { animation: slideDown 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
 
 /* --- 置中彈窗 (如刪除確認) 專用過場 --- */
-.dialog-enter-active .dialog-content { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-.dialog-leave-active .dialog-content { animation: popOut 0.2s ease-in forwards; }
+.dialog-enter-active .dialog-content { animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.dialog-leave-active .dialog-content { animation: popOut 0.15s ease-in forwards; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
@@ -75,9 +75,9 @@ body::before {
 @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 @keyframes popOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.8); } }
 
-/* 針對內容卡片嘅上浮載入動畫 */
+/* 內容卡片嘅上浮載入動畫 */
 @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-.animate-slide-up { animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-up { animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
 /* 拖曳狀態樣式 */
 .sortable-ghost { opacity: 0.4; background-color: #FFF2D1; }
@@ -739,7 +739,6 @@ data() {
         expenseLineChartInst: null,
         historicalRates: [], 
         
-        // Action Sheet & 行程操作變數
         showActionSheet: false,
         showDeleteConfirm: false,
         actionDayIdx: null,
@@ -751,6 +750,7 @@ data() {
         actForm: { time: '', activity: '', ride: '', note: '' },
         
         sortableInst: null,
+        chartRetryTimeout: null,
 
         days: [
             { date: "2026-05-10", dayNumber: "10", dateStr: "5月10日", displayDate: "5月10日 (日)", title: "抵達 + 租車 + 真心市集", flight: { departure: "07:50", arrival: "09:45", from: "HKG", to: "CNX", number: "UO738" }, activities: [ { time: "09:45", activity: "抵達清邁機場", ride: "Grab 20分鐘", note: "入境攞袋" }, { time: "11:30", activity: "租 ADV 160", ride: "10分鐘", note: "雙頭盔+鎖" }, { time: "13:00", activity: "真心市集 (Jing Jai)", ride: "園內", note: "手作+咖啡" }, { time: "18:00", activity: "塔佩門週日夜市", ride: "步行", note: "限定夜市！" } ] },
@@ -782,11 +782,8 @@ computed: {
 watch: {
     currentTab(newTab) {
         if (newTab === 'accounting') {
-            // 🌟 修正圖表載入 BUG：等待過場動畫完全結束後再初始化 Canvas 🌟
-            setTimeout(() => {
-                this.updateExpenseChart();
-                this.updateExpenseLineChart();
-            }, 250); 
+            this.updateExpenseChart();
+            this.updateExpenseLineChart();
         }
         if (newTab === 'rates' && this.historicalRates.length === 0) {
             this.fetchHistoricalRates();
@@ -810,7 +807,6 @@ methods: {
         return colorMap[category] || '#A9B1BD';
     },
 
-    /* 🌟 行程活動 SortableJS 拖拉排序邏輯 🌟 */
     initSortable() {
         const tbody = document.getElementById('itinerary-tbody');
         if (tbody) {
@@ -833,7 +829,6 @@ methods: {
         }
     },
 
-    /* 🌟 行程活動「更多」操作選單與 CRUD 🌟 */
     openActionSheet(dayIdx, actIdx) {
         this.actionDayIdx = dayIdx;
         this.actionActIdx = actIdx;
@@ -845,7 +840,7 @@ methods: {
     },
     triggerDeleteActivity() {
         this.showActionSheet = false;
-        setTimeout(() => { this.showDeleteConfirm = true; }, 300); // 確保 Action Sheet 關閉後再彈出對話框
+        setTimeout(() => { this.showDeleteConfirm = true; }, 300); 
     },
     confirmDeleteActivity() {
         this.days[this.actionDayIdx].activities.splice(this.actionActIdx, 1);
@@ -879,7 +874,6 @@ methods: {
         this.showActModal = false;
     },
 
-    /* 🌟 行李清單方法 🌟 */
     toggleChecklist(person, index) {
         const key = person === 'Me' ? 'checklistMe' : 'checklistChanb';
         this[key][index].done = !this[key][index].done;
@@ -909,7 +903,6 @@ methods: {
         }
     },
 
-    /* 🌟 會計記帳方法 🌟 */
     addExpense() {
         if (!this.newRecord.description || this.newRecord.amount <= 0) { alert('請填寫項目名稱同正確金額！'); return; }
         const newExpense = { id: Date.now(), ...this.newRecord };
@@ -930,16 +923,25 @@ methods: {
             snapshot.forEach(child => { loaded.unshift(child.val()); });
             this.expenses = loaded;
             if(this.currentTab === 'accounting'){
-                setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 250);
+                this.updateExpenseChart(); 
+                this.updateExpenseLineChart();
             }
         });
     },
 
-    /* 🌟 圖表渲染方法 (100% 修復顯示問題) 🌟 */
+    /* 🌟 圖表重試渲染機制 (100% 修復顯示問題) 🌟 */
     updateExpenseChart() {
         this.$nextTick(() => {
+            if (this.currentTab !== 'accounting') return; 
+            
             const canvas = document.getElementById('expenseChart');
-            if (!canvas) return;
+            if (!canvas) {
+                // 利用 setTimeout 循環檢查，等待 DOM 真正掛載
+                this.chartRetryTimeout = setTimeout(() => this.updateExpenseChart(), 50);
+                return;
+            }
+            clearTimeout(this.chartRetryTimeout);
+            
             if (this.expenseChartInst) {
                 this.expenseChartInst.destroy();
             }
@@ -964,8 +966,15 @@ methods: {
     },
     updateExpenseLineChart() {
         this.$nextTick(() => {
+            if (this.currentTab !== 'accounting') return;
+            
             const canvas = document.getElementById('expenseLineChart');
-            if (!canvas) return;
+            if (!canvas) {
+                this.lineChartRetryTimeout = setTimeout(() => this.updateExpenseLineChart(), 50);
+                return;
+            }
+            clearTimeout(this.lineChartRetryTimeout);
+            
             if (this.expenseLineChartInst) {
                 this.expenseLineChartInst.destroy();
             }
@@ -985,7 +994,6 @@ methods: {
         });
     },
 
-    /* 🌟 真實匯率與倒數邏輯 🌟 */
     async fetchRates() {
         try {
             const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/hkd.json');
@@ -1022,7 +1030,6 @@ methods: {
 
     startCountdown() {
         const target = new Date('2026-05-10T07:50:00+08:00').getTime();
-        // 將 2024年4月 到 2026年5月 計算為總進度期間，大約 730 日
         const totalPeriod = 730 * 24 * 60 * 60 * 1000; 
 
         setInterval(() => {
@@ -1044,13 +1051,13 @@ methods: {
             this.customRate = parseFloat(this.tempRate);
             db.ref('settings/customRate').set(this.customRate);
         }
-        if(this.currentTab === 'accounting') { setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 250); }
+        if(this.currentTab === 'accounting') { this.updateExpenseChart(); this.updateExpenseLineChart(); }
     },
     clearCustomRate() {
         this.showRateModal = false; 
         this.customRate = null;
         db.ref('settings/customRate').set(null);
-        if(this.currentTab === 'accounting') { setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 250); }
+        if(this.currentTab === 'accounting') { this.updateExpenseChart(); this.updateExpenseLineChart(); }
     },
     saveBudget() {
         this.showBudgetModal = false;
@@ -1070,7 +1077,6 @@ mounted() {
     this.fetchRates();
     this.startCountdown();
     
-    // 初始化 Sortable (如當前 Tab 為行程表)
     if(this.currentTab === 'itinerary') {
         this.$nextTick(() => { this.initSortable(); });
     }
@@ -1090,11 +1096,9 @@ mounted() {
         }
     });
 
-    // 確保即使用戶未手動觸發過保存，也載入雲端行程數據
     db.ref('itinerary_days').on('value', snapshot => {
         if(snapshot.exists()) {
             this.days = snapshot.val();
-            // 如果行程更新且當前在行程表 Tab，重新綁定 Sortable
             if(this.currentTab === 'itinerary') {
                 this.$nextTick(() => { this.initSortable(); });
             }
