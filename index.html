@@ -38,34 +38,33 @@ body::before {
     background: rgba(255, 249, 230, 0.96);
     z-index: -1;
 }
-.day-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.day-card { transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); }
 .day-card:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 15px -3px rgba(247, 179, 43, 0.2); }
 .selected { background-color: #F7B32B !important; color: white !important; border: 3px solid #F7B32B; box-shadow: 0 4px 14px rgba(247, 179, 43, 0.4); }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .flight-boarding { background: linear-gradient(135deg, #F7B32B, #F9A03F); }
 
-/* --- 🌟 再升級版：更極速、更絲滑嘅 iPhone/Pixel 級別 Tab 過場 --- */
-/* 將時間縮減至 0.12s，配合微小縮放與位移，操作會非常跟手 */
+/* --- 🔥 再度極速化：0.08s 極輕快爽手 Tab 過場 --- */
 .fade-enter-active, .fade-leave-active { 
-    transition: opacity 0.12s ease-out, transform 0.12s cubic-bezier(0.25, 0.8, 0.25, 1); 
+    transition: opacity 0.08s ease-out, transform 0.08s cubic-bezier(0.2, 0.8, 0.2, 1); 
 }
 .fade-enter-from { 
     opacity: 0; 
-    transform: scale(0.99) translateY(8px); 
+    transform: scale(0.99) translateY(5px); 
 }
 .fade-leave-to { 
     opacity: 0; 
-    transform: scale(0.99) translateY(-8px); 
+    transform: scale(0.99) translateY(-5px); 
 }
 
-/* --- Bottom Sheet (底部彈窗) 專用過場 --- */
-.modal-overlay-enter-active { animation: fadeIn 0.2s ease-out forwards; }
-.modal-overlay-leave-active { animation: fadeOut 0.2s ease-in forwards; }
+/* --- Bottom Sheet 彈窗過場 --- */
+.modal-overlay-enter-active { animation: fadeIn 0.15s ease-out forwards; }
+.modal-overlay-leave-active { animation: fadeOut 0.15s ease-in forwards; }
 .modal-overlay-enter-active .modal-content { animation: slideUp 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
 .modal-overlay-leave-active .modal-content { animation: slideDown 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
 
-/* --- 置中彈窗 (如刪除確認) 專用過場 --- */
-.dialog-enter-active .dialog-content { animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+/* --- 置中對話框過場 --- */
+.dialog-enter-active .dialog-content { animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 .dialog-leave-active .dialog-content { animation: popOut 0.15s ease-in forwards; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -75,13 +74,18 @@ body::before {
 @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 @keyframes popOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.8); } }
 
-/* 內容卡片嘅上浮載入動畫 */
-@keyframes slideUpFade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-.animate-slide-up { animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+/* 內容卡片嘅上浮動畫 */
+@keyframes slideUpFade { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+.animate-slide-up { animation: slideUpFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-/* 拖曳狀態樣式 */
-.sortable-ghost { opacity: 0.4; background-color: #FFF2D1; }
-.sortable-drag { cursor: grabbing !important; }
+/* 拖曳狀態樣式優化 */
+.sortable-ghost { opacity: 0.2; background-color: #F7B32B; }
+.sortable-drag { 
+    background-color: #ffffff; 
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15); 
+    cursor: grabbing !important; 
+    transform: scale(1.02);
+}
 </style>
 </head>
 <body class="min-h-screen pb-8 text-[#3A302A]">
@@ -167,10 +171,10 @@ body::before {
                     <button @click="addActivity(selectedDayIndex)" class="text-xs bg-[#F7B32B] text-white px-3 py-1.5 rounded-lg font-bold hover:bg-[#F9A03F] active:scale-95 shadow-sm transition-all"><i class="fas fa-plus mr-1"></i>新增活動</button>
                 </div>
                 <div class="px-3 sm:px-6 pb-5 sm:pb-6">
-                    <table class="w-full text-sm">
+                    <table class="w-full text-sm table-fixed">
                         <thead>
                             <tr class="border-b-2 border-[#F7B32B]/20 text-[#A8201A]">
-                                <th class="w-8"></th>
+                                <th class="w-10"></th>
                                 <th class="text-left py-3 font-black w-14 sm:w-20">時間</th>
                                 <th class="text-left py-3 font-black">活動</th>
                                 <th class="text-center py-3 font-black w-16 sm:w-24">距離</th>
@@ -178,16 +182,16 @@ body::before {
                             </tr>
                         </thead>
                         <tbody id="itinerary-tbody" class="divide-y divide-[#F5E6CC]">
-                            <tr v-for="(act, i) in selectedDay.activities" :key="act.id || i" :data-index="i" class="hover:bg-[#FFF9E6]/50 transition-colors bg-white">
+                            <tr v-for="(act, i) in selectedDay.activities" :key="act.id || (act.time + act.activity + i)" class="hover:bg-[#FFF9E6]/50 transition-colors bg-white group">
                                 <td class="py-4 text-center cursor-grab active:cursor-grabbing drag-handle text-[#D1C8B8] hover:text-[#F7B32B]">
                                     <i class="fas fa-bars text-lg"></i>
                                 </td>
-                                <td class="py-4 font-bold text-[#F7B32B] text-xs sm:text-sm">{{ act.time }}</td>
-                                <td class="py-4 font-bold text-[#3A302A]">
+                                <td class="py-4 font-bold text-[#F7B32B] text-xs sm:text-sm truncate">{{ act.time }}</td>
+                                <td class="py-4 font-bold text-[#3A302A] truncate pr-2">
                                     {{ act.activity }}
-                                    <div class="text-[11px] text-[#A8201A] sm:hidden mt-1">{{ act.note }}</div>
+                                    <div class="text-[11px] text-[#A8201A] sm:hidden mt-1 truncate">{{ act.note }}</div>
                                 </td>
-                                <td class="py-4 text-center text-[10px] sm:text-xs font-medium text-[#7D6B5D]">{{ act.ride }}</td>
+                                <td class="py-4 text-center text-[10px] sm:text-xs font-medium text-[#7D6B5D] truncate">{{ act.ride }}</td>
                                 <td class="py-4 text-center">
                                     <button @click.stop="openActionSheet(selectedDayIndex, i)" class="w-8 h-8 rounded-full bg-[#FFF9E6] text-[#B89B7E] hover:text-[#F7B32B] hover:bg-[#F5E6CC] transition-colors active:scale-95">
                                         <i class="fas fa-ellipsis-h"></i>
@@ -387,18 +391,19 @@ body::before {
                     <span class="text-[9px] sm:text-[10px] text-[#7D6B5D] mt-1 font-bold uppercase">Mins</span>
                 </div>
                 <span class="text-xl sm:text-2xl font-light text-[#D1C8B8] pb-3">:</span>
-                <div class="flex flex-col bg-[#FFF9E6] border border-[#A8201A]/30 rounded-2xl p-2 sm:p-3 min-w-[55px] sm:min-w-[70px] shadow-sm">
-                    <span class="text-3xl sm:text-4xl font-black font-mono text-[#A8201A] drop-shadow-sm">{{ countdown.seconds.toString().padStart(2,'0') }}</span>
-                    <span class="text-[9px] sm:text-[10px] text-[#A8201A] mt-1 font-bold uppercase">Secs</span>
+                <div class="flex flex-col bg-[#FFF9E6] border border-[#F5E6CC] rounded-2xl p-2 sm:p-3 min-w-[55px] sm:min-w-[70px] shadow-sm">
+                    <span class="text-3xl sm:text-4xl font-black font-mono text-[#F7B32B] drop-shadow-sm">{{ countdown.seconds.toString().padStart(2,'0') }}</span>
+                    <span class="text-[9px] sm:text-[10px] text-[#7D6B5D] mt-1 font-bold uppercase">Secs</span>
                 </div>
             </div>
             <div class="w-full bg-[#F5E6CC] rounded-full h-1.5 sm:h-2 mt-6 overflow-hidden shadow-inner relative">
                 <div class="bg-gradient-to-r from-[#F7B32B] via-[#F9A03F] to-[#A8201A] h-full rounded-full transition-all duration-1000 ease-out" :style="{ width: countdown.progress + '%' }"></div>
             </div>
             <div class="flex justify-between items-center text-[10px] sm:text-xs text-[#7D6B5D] mt-2 font-bold px-1">
-                <span>等待進度</span>
-                <span>{{ countdown.progress.toFixed(2) }}%</span>
+                <span>當前進度</span>
+                <span>{{ countdown.progress.toFixed(4) }}%</span>
             </div>
+            <div class="text-center text-xs sm:text-sm font-bold text-[#7D6B5D] mt-3"><i class="far fa-clock mr-1"></i> 2026-05-10 07:50 起飛</div>
         </div>
 
         <div class="bg-gradient-to-br from-[#F7B32B] to-[#F9A03F] text-white rounded-3xl p-6 sm:p-8 text-center shadow-lg relative overflow-hidden">
@@ -750,7 +755,6 @@ data() {
         actForm: { time: '', activity: '', ride: '', note: '' },
         
         sortableInst: null,
-        chartRetryTimeout: null,
 
         days: [
             { date: "2026-05-10", dayNumber: "10", dateStr: "5月10日", displayDate: "5月10日 (日)", title: "抵達 + 租車 + 真心市集", flight: { departure: "07:50", arrival: "09:45", from: "HKG", to: "CNX", number: "UO738" }, activities: [ { time: "09:45", activity: "抵達清邁機場", ride: "Grab 20分鐘", note: "入境攞袋" }, { time: "11:30", activity: "租 ADV 160", ride: "10分鐘", note: "雙頭盔+鎖" }, { time: "13:00", activity: "真心市集 (Jing Jai)", ride: "園內", note: "手作+咖啡" }, { time: "18:00", activity: "塔佩門週日夜市", ride: "步行", note: "限定夜市！" } ] },
@@ -782,8 +786,11 @@ computed: {
 watch: {
     currentTab(newTab) {
         if (newTab === 'accounting') {
-            this.updateExpenseChart();
-            this.updateExpenseLineChart();
+            // 🌟 完美修復圖表載入 BUG：等待過場動畫完全結束後再初始化 Canvas 🌟
+            setTimeout(() => {
+                this.updateExpenseChart();
+                this.updateExpenseLineChart();
+            }, 100); 
         }
         if (newTab === 'rates' && this.historicalRates.length === 0) {
             this.fetchHistoricalRates();
@@ -807,6 +814,7 @@ methods: {
         return colorMap[category] || '#A9B1BD';
     },
 
+    /* 🌟 行程活動 SortableJS 拖拉排序邏輯 🌟 */
     initSortable() {
         const tbody = document.getElementById('itinerary-tbody');
         if (tbody) {
@@ -815,11 +823,16 @@ methods: {
             }
             this.sortableInst = Sortable.create(tbody, {
                 handle: '.drag-handle',
-                animation: 200,
+                animation: 150,
                 easing: "cubic-bezier(0.25, 1, 0.5, 1)",
                 ghostClass: "sortable-ghost",
                 dragClass: "sortable-drag",
                 onEnd: (evt) => {
+                    const itemEl = evt.item;
+                    // 先還原 DOM 狀態，避免 Vue Virtual DOM 崩潰
+                    evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
+                    
+                    // 再更新 Vue 的數據
                     const arr = this.days[this.selectedDayIndex].activities;
                     const item = arr.splice(evt.oldIndex, 1)[0];
                     arr.splice(evt.newIndex, 0, item);
@@ -829,6 +842,7 @@ methods: {
         }
     },
 
+    /* 🌟 行程活動「更多」操作選單與 CRUD 🌟 */
     openActionSheet(dayIdx, actIdx) {
         this.actionDayIdx = dayIdx;
         this.actionActIdx = actIdx;
@@ -840,7 +854,7 @@ methods: {
     },
     triggerDeleteActivity() {
         this.showActionSheet = false;
-        setTimeout(() => { this.showDeleteConfirm = true; }, 300); 
+        setTimeout(() => { this.showDeleteConfirm = true; }, 300); // 確保 Action Sheet 關閉後再彈出對話框
     },
     confirmDeleteActivity() {
         this.days[this.actionDayIdx].activities.splice(this.actionActIdx, 1);
@@ -874,6 +888,7 @@ methods: {
         this.showActModal = false;
     },
 
+    /* 🌟 行李清單方法 🌟 */
     toggleChecklist(person, index) {
         const key = person === 'Me' ? 'checklistMe' : 'checklistChanb';
         this[key][index].done = !this[key][index].done;
@@ -903,6 +918,7 @@ methods: {
         }
     },
 
+    /* 🌟 會計記帳方法 🌟 */
     addExpense() {
         if (!this.newRecord.description || this.newRecord.amount <= 0) { alert('請填寫項目名稱同正確金額！'); return; }
         const newExpense = { id: Date.now(), ...this.newRecord };
@@ -923,25 +939,16 @@ methods: {
             snapshot.forEach(child => { loaded.unshift(child.val()); });
             this.expenses = loaded;
             if(this.currentTab === 'accounting'){
-                this.updateExpenseChart(); 
-                this.updateExpenseLineChart();
+                setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 100);
             }
         });
     },
 
-    /* 🌟 圖表重試渲染機制 (100% 修復顯示問題) 🌟 */
+    /* 🌟 圖表渲染方法 (100% 修復顯示問題) 🌟 */
     updateExpenseChart() {
         this.$nextTick(() => {
-            if (this.currentTab !== 'accounting') return; 
-            
             const canvas = document.getElementById('expenseChart');
-            if (!canvas) {
-                // 利用 setTimeout 循環檢查，等待 DOM 真正掛載
-                this.chartRetryTimeout = setTimeout(() => this.updateExpenseChart(), 50);
-                return;
-            }
-            clearTimeout(this.chartRetryTimeout);
-            
+            if (!canvas) return;
             if (this.expenseChartInst) {
                 this.expenseChartInst.destroy();
             }
@@ -966,15 +973,8 @@ methods: {
     },
     updateExpenseLineChart() {
         this.$nextTick(() => {
-            if (this.currentTab !== 'accounting') return;
-            
             const canvas = document.getElementById('expenseLineChart');
-            if (!canvas) {
-                this.lineChartRetryTimeout = setTimeout(() => this.updateExpenseLineChart(), 50);
-                return;
-            }
-            clearTimeout(this.lineChartRetryTimeout);
-            
+            if (!canvas) return;
             if (this.expenseLineChartInst) {
                 this.expenseLineChartInst.destroy();
             }
@@ -994,6 +994,7 @@ methods: {
         });
     },
 
+    /* 🌟 真實匯率與倒數邏輯 🌟 */
     async fetchRates() {
         try {
             const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/hkd.json');
@@ -1030,7 +1031,8 @@ methods: {
 
     startCountdown() {
         const target = new Date('2026-05-10T07:50:00+08:00').getTime();
-        const totalPeriod = 730 * 24 * 60 * 60 * 1000; 
+        const start = new Date('2024-04-01T00:00:00+08:00').getTime(); // 假設由2024年4月開始計畫
+        const totalDuration = target - start;
 
         setInterval(() => {
             const now = Date.now();
@@ -1042,7 +1044,8 @@ methods: {
             this.countdown.minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             this.countdown.seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            this.countdown.progress = Math.max(0, Math.min(100, 100 - (diff / totalPeriod) * 100));
+            const passed = now - start;
+            this.countdown.progress = Math.max(0, Math.min(100, (passed / totalDuration) * 100));
         }, 1000);
     },
     saveCustomRate() {
@@ -1051,13 +1054,13 @@ methods: {
             this.customRate = parseFloat(this.tempRate);
             db.ref('settings/customRate').set(this.customRate);
         }
-        if(this.currentTab === 'accounting') { this.updateExpenseChart(); this.updateExpenseLineChart(); }
+        if(this.currentTab === 'accounting') { setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 100); }
     },
     clearCustomRate() {
         this.showRateModal = false; 
         this.customRate = null;
         db.ref('settings/customRate').set(null);
-        if(this.currentTab === 'accounting') { this.updateExpenseChart(); this.updateExpenseLineChart(); }
+        if(this.currentTab === 'accounting') { setTimeout(() => { this.updateExpenseChart(); this.updateExpenseLineChart(); }, 100); }
     },
     saveBudget() {
         this.showBudgetModal = false;
