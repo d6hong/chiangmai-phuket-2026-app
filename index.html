@@ -15,7 +15,6 @@
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
@@ -169,7 +168,7 @@ body::before {
                     <table class="w-full text-sm min-w-[300px]">
                         <thead>
                             <tr class="border-b-2 border-[#F7B32B]/20 text-[#A8201A]">
-                                <th class="w-10"></th>
+                                <th class="w-8"></th>
                                 <th class="text-left py-3 font-black w-14 sm:w-20">時間</th>
                                 <th class="text-left py-3 font-black">活動</th>
                                 <th class="text-center py-3 font-black w-16 sm:w-24">距離</th>
@@ -253,6 +252,18 @@ body::before {
                 <div v-else class="mt-5 sm:mt-6 text-[11px] sm:text-sm font-bold text-[#F7B32B] flex items-center justify-center gap-1 bg-[#FFF9E6] py-2 rounded-xl border border-[#F7B32B]/30 cursor-pointer hover:bg-[#FFF2D1]" @click="openBudgetModal">
                     <i class="fas fa-hand-pointer"></i> 點擊設定總預算
                 </div>
+            </div>
+        </div>
+
+        <div class="mb-5 sm:mb-6">
+            <div class="flex items-center justify-between mb-2 px-1">
+                <span class="text-xs font-bold text-[#7D6B5D]">⚡ 快速記帳 (預設為現金/食物)</span>
+            </div>
+            <div class="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                <button @click="quickAddExpense(50)" class="flex-shrink-0 bg-white border border-[#F5E6CC] text-[#A8201A] font-black rounded-xl px-4 py-2 shadow-sm hover:bg-[#FFF9E6] active:scale-95 transition-all">+ 50 ฿</button>
+                <button @click="quickAddExpense(100)" class="flex-shrink-0 bg-white border border-[#F5E6CC] text-[#A8201A] font-black rounded-xl px-4 py-2 shadow-sm hover:bg-[#FFF9E6] active:scale-95 transition-all">+ 100 ฿</button>
+                <button @click="quickAddExpense(500)" class="flex-shrink-0 bg-white border border-[#F5E6CC] text-[#A8201A] font-black rounded-xl px-4 py-2 shadow-sm hover:bg-[#FFF9E6] active:scale-95 transition-all">+ 500 ฿</button>
+                <button @click="quickAddExpense(1000)" class="flex-shrink-0 bg-white border border-[#F5E6CC] text-[#A8201A] font-black rounded-xl px-4 py-2 shadow-sm hover:bg-[#FFF9E6] active:scale-95 transition-all">+ 1000 ฿</button>
             </div>
         </div>
 
@@ -765,7 +776,11 @@ data() {
         sortableInstMe: null,
         sortableInstChanb: null,
         
+        // 智能輪詢 Timer 避免卡死
         chartRetryChecker: null,
+        sortableItineraryTimer: null,
+        sortableMeTimer: null,
+        sortableChanbTimer: null,
 
         days: [
             { date: "2026-05-10", dayNumber: "10", dateStr: "5月10日", displayDate: "5月10日 (日)", title: "抵達 + 租車 + 真心市集", flight: { departure: "07:50", arrival: "09:45", from: "HKG", to: "CNX", number: "UO738" }, activities: [ { time: "09:45", activity: "清邁機場", ride: "Grab 20分鐘", note: "入境攞袋" }, { time: "11:30", activity: "Tawan Bike 租 ADV 160", ride: "10分鐘", note: "雙頭盔+鎖" }, { time: "13:00", activity: "Jing Jai Market", ride: "園內", note: "手作+咖啡" }, { time: "18:00", activity: "Tha Phae Gate Sunday Walking Street", ride: "步行", note: "限定夜市！" } ] },
@@ -803,14 +818,14 @@ watch: {
             this.fetchHistoricalRates();
         }
         if (newTab === 'itinerary') {
-            this.$nextTick(() => { this.initItinerarySortable(); });
+            this.safeInitItinerarySortable();
         }
         if (newTab === 'departure') {
-            this.$nextTick(() => { this.initChecklistSortables(); });
+            this.safeInitChecklistSortables();
         }
     },
     selectedDayIndex() {
-        this.$nextTick(() => { this.initItinerarySortable(); });
+        this.safeInitItinerarySortable();
     }
 },
 methods: {
@@ -824,59 +839,78 @@ methods: {
         return colorMap[category] || '#A9B1BD';
     },
 
-    /* 🌟 行程活動 SortableJS 拖拉排序邏輯 🌟 */
-    initItinerarySortable() {
-        const tbody = document.getElementById('itinerary-tbody');
-        if (tbody) {
-            if (this.sortableInstItinerary) { this.sortableInstItinerary.destroy(); }
-            this.sortableInstItinerary = Sortable.create(tbody, {
-                handle: '.drag-handle',
-                animation: 150,
-                easing: "cubic-bezier(0.25, 1, 0.5, 1)",
-                ghostClass: "sortable-ghost",
-                dragClass: "sortable-drag",
-                onEnd: (evt) => {
-                    const itemEl = evt.item;
-                    evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
-                    const arr = this.days[this.selectedDayIndex].activities;
-                    const item = arr.splice(evt.oldIndex, 1)[0];
-                    arr.splice(evt.newIndex, 0, item);
-                    db.ref('itinerary_days').set(this.days);
-                }
-            });
-        }
+    /* 🌟 行程活動 SortableJS 智能輪詢綁定 🌟 */
+    safeInitItinerarySortable() {
+        let attempts = 0;
+        if (this.sortableItineraryTimer) clearInterval(this.sortableItineraryTimer);
+        this.sortableItineraryTimer = setInterval(() => {
+            const tbody = document.getElementById('itinerary-tbody');
+            if (tbody) {
+                clearInterval(this.sortableItineraryTimer);
+                if (this.sortableInstItinerary) this.sortableInstItinerary.destroy();
+                this.sortableInstItinerary = Sortable.create(tbody, {
+                    handle: '.drag-handle',
+                    animation: 150,
+                    easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+                    ghostClass: "sortable-ghost",
+                    dragClass: "sortable-drag",
+                    onEnd: (evt) => {
+                        const itemEl = evt.item;
+                        evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
+                        const arr = this.days[this.selectedDayIndex].activities;
+                        const item = arr.splice(evt.oldIndex, 1)[0];
+                        arr.splice(evt.newIndex, 0, item);
+                        db.ref('itinerary_days').set(this.days);
+                    }
+                });
+            }
+            if (++attempts > 20) clearInterval(this.sortableItineraryTimer);
+        }, 50);
     },
 
-    /* 🌟 行李清單 SortableJS 拖拉排序邏輯 🌟 */
-    initChecklistSortables() {
-        const ulMe = document.getElementById('checklist-me-ul');
-        if (ulMe) {
-            if (this.sortableInstMe) { this.sortableInstMe.destroy(); }
-            this.sortableInstMe = Sortable.create(ulMe, {
-                handle: '.drag-handle', animation: 150, ghostClass: "sortable-ghost", dragClass: "sortable-drag",
-                onEnd: (evt) => {
-                    const itemEl = evt.item;
-                    evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
-                    const item = this.checklistMe.splice(evt.oldIndex, 1)[0];
-                    this.checklistMe.splice(evt.newIndex, 0, item);
-                    db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
-                }
-            });
-        }
-        const ulChanb = document.getElementById('checklist-chanb-ul');
-        if (ulChanb) {
-            if (this.sortableInstChanb) { this.sortableInstChanb.destroy(); }
-            this.sortableInstChanb = Sortable.create(ulChanb, {
-                handle: '.drag-handle', animation: 150, ghostClass: "sortable-ghost", dragClass: "sortable-drag",
-                onEnd: (evt) => {
-                    const itemEl = evt.item;
-                    evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
-                    const item = this.checklistChanb.splice(evt.oldIndex, 1)[0];
-                    this.checklistChanb.splice(evt.newIndex, 0, item);
-                    db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
-                }
-            });
-        }
+    /* 🌟 行李清單 SortableJS 智能輪詢綁定 🌟 */
+    safeInitChecklistSortables() {
+        let attempts = 0;
+        if (this.sortableMeTimer) clearInterval(this.sortableMeTimer);
+        this.sortableMeTimer = setInterval(() => {
+            const ulMe = document.getElementById('checklist-me-ul');
+            if (ulMe) {
+                clearInterval(this.sortableMeTimer);
+                if (this.sortableInstMe) this.sortableInstMe.destroy();
+                this.sortableInstMe = Sortable.create(ulMe, {
+                    handle: '.drag-handle', animation: 150, ghostClass: "sortable-ghost", dragClass: "sortable-drag",
+                    onEnd: (evt) => {
+                        const itemEl = evt.item;
+                        evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
+                        const item = this.checklistMe.splice(evt.oldIndex, 1)[0];
+                        this.checklistMe.splice(evt.newIndex, 0, item);
+                        db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
+                    }
+                });
+            }
+            if (++attempts > 20) clearInterval(this.sortableMeTimer);
+        }, 50);
+
+        let attemptsChanb = 0;
+        if (this.sortableChanbTimer) clearInterval(this.sortableChanbTimer);
+        this.sortableChanbTimer = setInterval(() => {
+            const ulChanb = document.getElementById('checklist-chanb-ul');
+            if (ulChanb) {
+                clearInterval(this.sortableChanbTimer);
+                if (this.sortableInstChanb) this.sortableInstChanb.destroy();
+                this.sortableInstChanb = Sortable.create(ulChanb, {
+                    handle: '.drag-handle', animation: 150, ghostClass: "sortable-ghost", dragClass: "sortable-drag",
+                    onEnd: (evt) => {
+                        const itemEl = evt.item;
+                        evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
+                        const item = this.checklistChanb.splice(evt.oldIndex, 1)[0];
+                        this.checklistChanb.splice(evt.newIndex, 0, item);
+                        db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
+                    }
+                });
+            }
+            if (++attemptsChanb > 20) clearInterval(this.sortableChanbTimer);
+        }, 50);
     },
 
     /* 🌟 行程活動操作與 CRUD 🌟 */
@@ -891,7 +925,7 @@ methods: {
     },
     triggerDeleteActivity() {
         this.showActionSheet = false;
-        setTimeout(() => { this.showDeleteConfirm = true; }, 300); 
+        setTimeout(() => { this.showDeleteConfirm = true; }, 200); 
     },
     confirmDeleteActivity() {
         this.days[this.actionDayIdx].activities.splice(this.actionActIdx, 1);
@@ -954,6 +988,19 @@ methods: {
         }
     },
 
+    /* 🌟 ⚡ 快速記帳方法 🌟 */
+    quickAddExpense(amount) {
+        const newExpense = {
+            id: Date.now(),
+            date: getLocalISODate(),
+            description: '快速記帳',
+            amount: amount,
+            category: '食物',
+            paymentMethod: '現金'
+        };
+        db.ref('expenses').push(newExpense);
+    },
+
     /* 🌟 會計記帳方法 🌟 */
     addExpense() {
         if (!this.newRecord.description || this.newRecord.amount <= 0) { alert('請填寫項目名稱同正確金額！'); return; }
@@ -980,7 +1027,7 @@ methods: {
         });
     },
 
-    /* 🌟 圖表智能輪詢渲染 (100% 解決載入空白問題) 🌟 */
+    /* 🌟 圖表智能輪詢渲染 🌟 */
     safeRenderCharts() {
         let attempts = 0;
         if (this.chartRetryChecker) clearInterval(this.chartRetryChecker);
@@ -1071,8 +1118,10 @@ methods: {
     },
 
     startCountdown() {
+        // 目標：2026-05-10 07:50
         const target = new Date('2026-05-10T07:50:00+08:00').getTime();
-        const start = new Date('2024-04-01T00:00:00+08:00').getTime(); 
+        // 起點：2026-04-07 00:00 (令目前時間 April 8 大約顯示為 4.x%)
+        const start = new Date('2026-04-07T00:00:00+08:00').getTime(); 
         const totalDuration = target - start;
 
         setInterval(() => {
@@ -1129,7 +1178,7 @@ mounted() {
     this.startCountdown();
     
     if(this.currentTab === 'itinerary') {
-        this.$nextTick(() => { this.initItinerarySortable(); });
+        this.safeInitItinerarySortable();
     }
 
     db.ref('settings/customRate').on('value', snapshot => {
@@ -1151,7 +1200,7 @@ mounted() {
         if(snapshot.exists()) {
             this.days = snapshot.val();
             if(this.currentTab === 'itinerary') {
-                this.$nextTick(() => { this.initItinerarySortable(); });
+                this.safeInitItinerarySortable();
             }
         } else {
             db.ref('itinerary_days').set(this.days);
