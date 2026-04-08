@@ -15,6 +15,7 @@
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
@@ -129,6 +130,22 @@ body::before {
                         <div class="font-black text-lg sm:text-xl text-[#3A302A]">Day {{ selectedDayIndex + 1 }} • {{ selectedDay.displayDate }}</div>
                         <div class="text-[#A8201A] font-bold text-sm mt-0.5">{{ selectedDay.title }}</div>
                     </div>
+                </div>
+            </div>
+            
+            <div v-if="selectedDay.weather" class="px-5 sm:px-6 py-3 sm:py-4 bg-white border-b border-[#F5E6CC] flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-[#FFF9E6] rounded-full flex items-center justify-center text-xl text-[#F7B32B] shadow-inner">
+                        <i class="fas" :class="selectedDay.weather.icon"></i>
+                    </div>
+                    <div>
+                        <div class="text-base sm:text-lg font-black text-[#3A302A]">{{ selectedDay.weather.temp }}</div>
+                        <div class="text-[10px] sm:text-xs font-bold text-[#7D6B5D]">{{ selectedDay.weather.desc }}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs sm:text-sm font-black text-[#A8201A]"><i class="fas fa-umbrella mr-1"></i>降雨機率 {{ selectedDay.weather.rain }}</div>
+                    <div class="text-[10px] sm:text-xs font-bold text-[#B89B7E] mt-0.5">預測天氣</div>
                 </div>
             </div>
             
@@ -255,18 +272,6 @@ body::before {
             </div>
         </div>
 
-        <div class="mb-5 sm:mb-6">
-            <div class="flex items-center justify-between mb-2 px-1">
-                <span class="text-xs font-bold text-[#7D6B5D]">⚡ 快速記帳 (預設為現金/食物)</span>
-            </div>
-            <div class="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-                <button @click="quickAddExpense(50)" class="flex-shrink-0 bg-white border border-[#F5E6CC] text-[#A8201A] font-black rounded-xl px-4 py-2 shadow-sm hover:bg-[#FFF9E6] active:scale-95 transition-all">+ 50 ฿</button>
-                <button @click="quickAddExpense(100)" class="flex-shrink-0 bg-white border border-[#F5E6CC] text-[#A8201A] font-black rounded-xl px-4 py-2 shadow-sm hover:bg-[#FFF9E6] active:scale-95 transition-all">+ 100 ฿</button>
-                <button @click="quickAddExpense(500)" class="flex-shrink-0 bg-white border border-[#F5E6CC] text-[#A8201A] font-black rounded-xl px-4 py-2 shadow-sm hover:bg-[#FFF9E6] active:scale-95 transition-all">+ 500 ฿</button>
-                <button @click="quickAddExpense(1000)" class="flex-shrink-0 bg-white border border-[#F5E6CC] text-[#A8201A] font-black rounded-xl px-4 py-2 shadow-sm hover:bg-[#FFF9E6] active:scale-95 transition-all">+ 1000 ฿</button>
-            </div>
-        </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
             <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md border border-[#F5E6CC] min-h-[300px] flex flex-col">
                 <h3 class="text-base sm:text-lg font-black mb-4 flex items-center gap-2 text-[#A8201A]">
@@ -306,7 +311,7 @@ body::before {
                 </div>
                 <div class="text-right flex-shrink-0">
                     <div class="font-black text-xl sm:text-2xl text-[#3A302A]">-{{ expense.amount }} <span class="text-xs sm:text-sm text-[#F7B32B]">THB</span></div>
-                    <div class="text-[10px] sm:text-xs font-bold text-[#A8201A] mt-0.5 sm:mt-1">≈ {{ Math.round((expense.amount || 0) / (currentRate || 1)) }} HKD</div>
+                    <div class="text-[10px] sm:text-xs font-bold text-[#A8201A] mt-0.5 sm:mt-1">≈ {{ (parseFloat(expense.amount || 0) / currentRate).toFixed(1) }} HKD</div>
                 </div>
                 <button @click="deleteExpense(expense.id)" class="ml-3 sm:ml-5 text-[#D1C8B8] hover:text-[#A8201A] transition-colors p-2 bg-[#FFF9E6] rounded-full hover:bg-red-50 flex-shrink-0">
                     <i class="fas fa-trash-alt"></i>
@@ -751,7 +756,7 @@ data() {
         customRate: null,
         totalBudget: null,
         tempRate: 4.1616,
-        tempBudget: 25000,
+        tempBudget: 100000,
         lastUpdateTime: '',
         countdown: { days: 0, hours: 0, minutes: 0, seconds: 0, progress: 0 },
         newRecord: { date: getLocalISODate(), description: '', amount: '', category: '食物', paymentMethod: '現金' },
@@ -776,36 +781,36 @@ data() {
         sortableInstMe: null,
         sortableInstChanb: null,
         
-        // 智能輪詢 Timer 避免卡死
         chartRetryChecker: null,
         sortableItineraryTimer: null,
         sortableMeTimer: null,
         sortableChanbTimer: null,
 
         days: [
-            { date: "2026-05-10", dayNumber: "10", dateStr: "5月10日", displayDate: "5月10日 (日)", title: "抵達 + 租車 + 真心市集", flight: { departure: "07:50", arrival: "09:45", from: "HKG", to: "CNX", number: "UO738" }, activities: [ { time: "09:45", activity: "清邁機場", ride: "Grab 20分鐘", note: "入境攞袋" }, { time: "11:30", activity: "Tawan Bike 租 ADV 160", ride: "10分鐘", note: "雙頭盔+鎖" }, { time: "13:00", activity: "Jing Jai Market", ride: "園內", note: "手作+咖啡" }, { time: "18:00", activity: "Tha Phae Gate Sunday Walking Street", ride: "步行", note: "限定夜市！" } ] },
-            { date: "2026-05-11", dayNumber: "11", dateStr: "5月11日", displayDate: "5月11日 (一)", title: "Theory Class + 素帖寺", activities: [ { time: "08:00", activity: "Driving School", ride: "—", note: "全日上堂" }, { time: "18:15", activity: "Doi Suthep", ride: "30-45分鐘", note: "絕美夜景" } ] },
-            { date: "2026-05-12", dayNumber: "12", dateStr: "5月12日", displayDate: "5月12日 (二)", title: "Driving Test + 按摩慶祝", activities: [ { time: "08:00", activity: "Driving Test 路試", ride: "—", note: "加油！" }, { time: "18:00", activity: "Night Bazaar 慶祝", ride: "步行", note: "放鬆食大餐" } ] },
-            { date: "2026-05-13", dayNumber: "13", dateStr: "5月13日", displayDate: "5月13日 (三)", title: "因他農山國家公園", activities: [ { time: "07:30", activity: "Doi Inthanon National Park", ride: "2.5-3小時", note: "山上氣溫涼" }, { time: "14:30", activity: "Kew Mae Pan Nature Trail", ride: "步行", note: "絕景雲海森林" } ] },
-            { date: "2026-05-14", dayNumber: "14", dateStr: "5月14日", displayDate: "5月14日 (四)", title: "DLT領證 + 藝術村", activities: [ { time: "08:30", activity: "Chiang Mai DLT", ride: "—", note: "正式攞牌！🎉" }, { time: "10:30", activity: "Baan Kang Wat", ride: "40分鐘", note: "文青打卡點" } ] },
-            { date: "2026-05-15", dayNumber: "15", dateStr: "5月15日", displayDate: "5月15日 (五)", title: "征服 762 彎：清邁 → 拜縣", activities: [ { time: "07:00", activity: "Pai", ride: "3.5-4小時", note: "極致彎道體驗" }, { time: "18:00", activity: "Pai Walking Street", ride: "步行", note: "浪漫週末夜市" } ] },
-            { date: "2026-05-16", dayNumber: "16", dateStr: "5月16日", displayDate: "5月16日 (六)", title: "拜縣探索 + 返清邁", activities: [ { time: "08:00", activity: "Yun Lai Viewpoint", ride: "45分鐘", note: "早去避開人潮" }, { time: "16:00", activity: "拜縣返清邁", ride: "3.5-4小時", note: "下晝起程避黑" } ] },
-            { date: "2026-05-17", dayNumber: "17", dateStr: "5月17日", displayDate: "5月17日 (日)", title: "黏黏瀑布 + 大峽谷", activities: [ { time: "08:00", activity: "Bua Tong Sticky Waterfall", ride: "1.5小時", note: "攀爬瀑布超爽" }, { time: "13:30", activity: "Grand Canyon Chiang Mai", ride: "短途", note: "影相 + 跳水" } ] },
-            { date: "2026-05-18", dayNumber: "18", dateStr: "5月18日", displayDate: "5月18日 (一)", title: "美甘朋村 + 歐布汗", activities: [ { time: "08:00", activity: "Mae Kampong Village", ride: "1小時", note: "深山村落風味" }, { time: "14:00", activity: "Ob Khan National Park", ride: "45分鐘", note: "大峽谷游水" } ] },
-            { date: "2026-05-19", dayNumber: "19", dateStr: "5月19日", displayDate: "5月19日 (二)", title: "飛往布吉島", flight: { departure: "14:35", arrival: "16:40", from: "CNX", to: "HKT", number: "PG248" }, activities: [ { time: "下午", activity: "PG248 CNX→HKT", ride: "—", note: "轉戰陽光海灘" } ] },
-            { date: "2026-05-20", dayNumber: "20", dateStr: "5月20日", displayDate: "5月20日 (三)", title: "布吉 Day 1：Resort Chill", activities: [ { time: "全日", activity: "Resort 休息 + 游水", ride: "—", note: "完全放空模式" } ] },
-            { date: "2026-05-21", dayNumber: "21", dateStr: "5月21日", displayDate: "5月21日 (四)", title: "布吉 Day 2：大佛 + 老街", activities: [ { time: "全日", activity: "Big Buddha Phuket", ride: "—", note: "打卡靚景" }, { time: "下午", activity: "Phuket Old Town", ride: "—", note: "打卡靚景" } ] },
-            { date: "2026-05-22", dayNumber: "22", dateStr: "5月22日", displayDate: "5月22日 (五)", title: "布吉 Day 3：海島跳島遊", activities: [ { time: "全日", activity: "跳島遊", ride: "—", note: "出海玩水！" } ] },
-            { date: "2026-05-23", dayNumber: "23", dateStr: "5月23日", displayDate: "5月23日 (六)", title: "布吉 Day 4：最後衝刺", activities: [ { time: "全日", activity: "海灘 + 夜市購物", ride: "—", note: "最後掃貨" } ] },
-            { date: "2026-05-24", dayNumber: "24", dateStr: "5月24日", displayDate: "5月24日 (日)", title: "回程返港", flight: { departure: "11:15", arrival: "16:00", from: "HKT", to: "HKG", number: "UO725" }, activities: [ { time: "早上", activity: "退房往機場", ride: "—", note: "結束完美旅程" } ] }
+            { date: "2026-05-10", dayNumber: "10", dateStr: "5月10日", displayDate: "5月10日 (日)", title: "抵達 + 租車 + 真心市集", weather: { temp: "35° / 25°", desc: "晴朗", icon: "fa-sun", rain: "10%" }, flight: { departure: "07:50", arrival: "09:45", from: "HKG", to: "CNX", number: "UO738" }, activities: [ { time: "09:45", activity: "清邁機場", ride: "Grab 20分鐘", note: "入境攞袋" }, { time: "11:30", activity: "Tawan Bike 租 ADV 160", ride: "10分鐘", note: "雙頭盔+鎖" }, { time: "13:00", activity: "Jing Jai Market", ride: "園內", note: "手作+咖啡" }, { time: "18:00", activity: "Tha Phae Gate Sunday Walking Street", ride: "步行", note: "限定夜市！" } ] },
+            { date: "2026-05-11", dayNumber: "11", dateStr: "5月11日", displayDate: "5月11日 (一)", title: "Theory Class + 素帖寺", weather: { temp: "36° / 26°", desc: "晴時多雲", icon: "fa-cloud-sun", rain: "20%" }, activities: [ { time: "08:00", activity: "Driving School", ride: "—", note: "全日上堂" }, { time: "18:15", activity: "Doi Suthep", ride: "30-45分鐘", note: "絕美夜景" } ] },
+            { date: "2026-05-12", dayNumber: "12", dateStr: "5月12日", displayDate: "5月12日 (二)", title: "Driving Test + 按摩慶祝", weather: { temp: "34° / 25°", desc: "雷陣雨", icon: "fa-cloud-bolt", rain: "60%" }, activities: [ { time: "08:00", activity: "Driving Test 路試", ride: "—", note: "加油！" }, { time: "18:00", activity: "Night Bazaar 慶祝", ride: "步行", note: "放鬆食大餐" } ] },
+            { date: "2026-05-13", dayNumber: "13", dateStr: "5月13日", displayDate: "5月13日 (三)", title: "因他農山國家公園", weather: { temp: "33° / 24°", desc: "多雲", icon: "fa-cloud", rain: "40%" }, activities: [ { time: "07:30", activity: "Doi Inthanon National Park", ride: "2.5-3小時", note: "山上氣溫涼" }, { time: "14:30", activity: "Kew Mae Pan Nature Trail", ride: "步行", note: "絕景雲海森林" } ] },
+            { date: "2026-05-14", dayNumber: "14", dateStr: "5月14日", displayDate: "5月14日 (四)", title: "DLT領證 + 藝術村", weather: { temp: "35° / 25°", desc: "晴朗", icon: "fa-sun", rain: "10%" }, activities: [ { time: "08:30", activity: "Chiang Mai DLT", ride: "—", note: "正式攞牌！🎉" }, { time: "10:30", activity: "Baan Kang Wat", ride: "40分鐘", note: "文青打卡點" } ] },
+            { date: "2026-05-15", dayNumber: "15", dateStr: "5月15日", displayDate: "5月15日 (五)", title: "征服 762 彎：清邁 → 拜縣", weather: { temp: "34° / 24°", desc: "晴時多雲", icon: "fa-cloud-sun", rain: "20%" }, activities: [ { time: "07:00", activity: "Pai", ride: "3.5-4小時", note: "極致彎道體驗" }, { time: "18:00", activity: "Pai Walking Street", ride: "步行", note: "浪漫週末夜市" } ] },
+            { date: "2026-05-16", dayNumber: "16", dateStr: "5月16日", displayDate: "5月16日 (六)", title: "拜縣探索 + 返清邁", weather: { temp: "33° / 23°", desc: "局部陣雨", icon: "fa-cloud-rain", rain: "50%" }, activities: [ { time: "08:00", activity: "Yun Lai Viewpoint", ride: "45分鐘", note: "早去避開人潮" }, { time: "16:00", activity: "拜縣返清邁", ride: "3.5-4小時", note: "下晝起程避黑" } ] },
+            { date: "2026-05-17", dayNumber: "17", dateStr: "5月17日", displayDate: "5月17日 (日)", title: "黏黏瀑布 + 大峽谷", weather: { temp: "35° / 25°", desc: "晴朗", icon: "fa-sun", rain: "15%" }, activities: [ { time: "08:00", activity: "Bua Tong Sticky Waterfall", ride: "1.5小時", note: "攀爬瀑布超爽" }, { time: "13:30", activity: "Grand Canyon Chiang Mai", ride: "短途", note: "影相 + 跳水" } ] },
+            { date: "2026-05-18", dayNumber: "18", dateStr: "5月18日", displayDate: "5月18日 (一)", title: "美甘朋村 + 歐布汗", weather: { temp: "34° / 25°", desc: "多雲時晴", icon: "fa-cloud-sun", rain: "25%" }, activities: [ { time: "08:00", activity: "Mae Kampong Village", ride: "1小時", note: "深山村落風味" }, { time: "14:00", activity: "Ob Khan National Park", ride: "45分鐘", note: "大峽谷游水" } ] },
+            { date: "2026-05-19", dayNumber: "19", dateStr: "5月19日", displayDate: "5月19日 (二)", title: "飛往布吉島", weather: { temp: "32° / 27°", desc: "雷陣雨", icon: "fa-cloud-bolt", rain: "70%" }, flight: { departure: "14:35", arrival: "16:40", from: "CNX", to: "HKT", number: "PG248" }, activities: [ { time: "下午", activity: "PG248 CNX→HKT", ride: "—", note: "轉戰陽光海灘" } ] },
+            { date: "2026-05-20", dayNumber: "20", dateStr: "5月20日", displayDate: "5月20日 (三)", title: "布吉 Day 1：Resort Chill", weather: { temp: "31° / 26°", desc: "陣雨", icon: "fa-cloud-rain", rain: "60%" }, activities: [ { time: "全日", activity: "Resort 休息 + 游水", ride: "—", note: "完全放空模式" } ] },
+            { date: "2026-05-21", dayNumber: "21", dateStr: "5月21日", displayDate: "5月21日 (四)", title: "布吉 Day 2：大佛 + 老街", weather: { temp: "33° / 27°", desc: "多雲時晴", icon: "fa-cloud-sun", rain: "30%" }, activities: [ { time: "全日", activity: "Big Buddha Phuket", ride: "—", note: "打卡靚景" }, { time: "下午", activity: "Phuket Old Town", ride: "—", note: "打卡靚景" } ] },
+            { date: "2026-05-22", dayNumber: "22", dateStr: "5月22日", displayDate: "5月22日 (五)", title: "布吉 Day 3：海島跳島遊", weather: { temp: "32° / 26°", desc: "多雲", icon: "fa-cloud", rain: "40%" }, activities: [ { time: "全日", activity: "跳島遊", ride: "—", note: "出海玩水！" } ] },
+            { date: "2026-05-23", dayNumber: "23", dateStr: "5月23日", displayDate: "5月23日 (六)", title: "布吉 Day 4：最後衝刺", weather: { temp: "33° / 27°", desc: "晴時多雲", icon: "fa-cloud-sun", rain: "20%" }, activities: [ { time: "全日", activity: "海灘 + 夜市購物", ride: "—", note: "最後掃貨" } ] },
+            { date: "2026-05-24", dayNumber: "24", dateStr: "5月24日", displayDate: "5月24日 (日)", title: "回程返港", weather: { temp: "32° / 26°", desc: "局部陣雨", icon: "fa-cloud-rain", rain: "50%" }, flight: { departure: "11:15", arrival: "16:00", from: "HKT", to: "HKG", number: "UO725" }, activities: [ { time: "早上", activity: "退房往機場", ride: "—", note: "結束完美旅程" } ] }
         ]
     }
 },
 computed: {
     selectedDay() { return this.days[this.selectedDayIndex] || null; },
+    currentRate() { return parseFloat(this.customRate) || this.rates.THB || 4.16; },
     currentRateDisplay() { return Number(this.customRate || this.rates.THB || 0).toFixed(2); },
     totalTHB() { return this.expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0); },
-    totalHKD() { return Math.round(this.totalTHB / (parseFloat(this.customRate) || this.rates.THB || 1)); },
+    totalHKD() { return Math.round(this.totalTHB / this.currentRate); },
     usagePercent() { return this.totalBudget ? Math.min((this.totalTHB / this.totalBudget) * 100, 100) : 0; },
     remainingBudget() { return this.totalBudget ? Math.max(this.totalBudget - this.totalTHB, 0) : 0; }
 },
@@ -839,7 +844,6 @@ methods: {
         return colorMap[category] || '#A9B1BD';
     },
 
-    /* 🌟 行程活動 SortableJS 智能輪詢綁定 🌟 */
     safeInitItinerarySortable() {
         let attempts = 0;
         if (this.sortableItineraryTimer) clearInterval(this.sortableItineraryTimer);
@@ -868,7 +872,6 @@ methods: {
         }, 50);
     },
 
-    /* 🌟 行李清單 SortableJS 智能輪詢綁定 🌟 */
     safeInitChecklistSortables() {
         let attempts = 0;
         if (this.sortableMeTimer) clearInterval(this.sortableMeTimer);
@@ -913,7 +916,6 @@ methods: {
         }, 50);
     },
 
-    /* 🌟 行程活動操作與 CRUD 🌟 */
     openActionSheet(dayIdx, actIdx) {
         this.actionDayIdx = dayIdx;
         this.actionActIdx = actIdx;
@@ -925,7 +927,7 @@ methods: {
     },
     triggerDeleteActivity() {
         this.showActionSheet = false;
-        setTimeout(() => { this.showDeleteConfirm = true; }, 200); 
+        setTimeout(() => { this.showDeleteConfirm = true; }, 300); 
     },
     confirmDeleteActivity() {
         this.days[this.actionDayIdx].activities.splice(this.actionActIdx, 1);
@@ -958,7 +960,6 @@ methods: {
         this.showActModal = false;
     },
 
-    /* 🌟 行李清單 CRUD 方法 🌟 */
     toggleChecklist(person, index) {
         const key = person === 'Me' ? 'checklistMe' : 'checklistChanb';
         this[key][index].done = !this[key][index].done;
@@ -988,20 +989,6 @@ methods: {
         }
     },
 
-    /* 🌟 ⚡ 快速記帳方法 🌟 */
-    quickAddExpense(amount) {
-        const newExpense = {
-            id: Date.now(),
-            date: getLocalISODate(),
-            description: '快速記帳',
-            amount: amount,
-            category: '食物',
-            paymentMethod: '現金'
-        };
-        db.ref('expenses').push(newExpense);
-    },
-
-    /* 🌟 會計記帳方法 🌟 */
     addExpense() {
         if (!this.newRecord.description || this.newRecord.amount <= 0) { alert('請填寫項目名稱同正確金額！'); return; }
         const newExpense = { id: Date.now(), ...this.newRecord };
@@ -1027,7 +1014,6 @@ methods: {
         });
     },
 
-    /* 🌟 圖表智能輪詢渲染 🌟 */
     safeRenderCharts() {
         let attempts = 0;
         if (this.chartRetryChecker) clearInterval(this.chartRetryChecker);
@@ -1057,7 +1043,6 @@ methods: {
             dateTotals[date] = (dateTotals[date] || 0) + amt;
         });
 
-        // 畫 Pie
         const pieLabels = Object.keys(categoryTotals);
         const pieData = Object.values(categoryTotals);
         const pieColors = pieLabels.map(label => this.getCategoryColor(label));
@@ -1071,7 +1056,6 @@ methods: {
             }
         });
 
-        // 畫 Line
         const sortedDates = Object.keys(dateTotals).sort();
         const displayLabels = sortedDates.map(date => date ? date.split('-')[2] : '');
         const lineData = sortedDates.map(date => dateTotals[date]);
@@ -1082,7 +1066,6 @@ methods: {
         });
     },
 
-    /* 🌟 真實匯率與倒數邏輯 🌟 */
     async fetchRates() {
         try {
             const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/hkd.json');
@@ -1118,9 +1101,7 @@ methods: {
     },
 
     startCountdown() {
-        // 目標：2026-05-10 07:50
         const target = new Date('2026-05-10T07:50:00+08:00').getTime();
-        // 起點：2026-04-07 00:00 (令目前時間 April 8 大約顯示為 4.x%)
         const start = new Date('2026-04-07T00:00:00+08:00').getTime(); 
         const totalDuration = target - start;
 
