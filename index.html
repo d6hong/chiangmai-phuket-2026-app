@@ -73,7 +73,12 @@ body::before {
 @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
 .animate-slide-up { animation: slideUpFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-/* 🌟 恢復最佳手感拖曳樣式 🌟 */
+/* 🌟 統一手機與電腦拖曳樣式及手感 🌟 */
+.drag-handle {
+    /* 核心修復：防止手機端拖拉時誤判為頁面滑動，令觸控即時響應 */
+    touch-action: none; 
+    -webkit-touch-callout: none;
+}
 .sortable-ghost { opacity: 0.3; background-color: #F7B32B !important; }
 .sortable-drag { 
     background-color: #ffffff !important; 
@@ -453,7 +458,7 @@ body::before {
                         <div class="h-full bg-[#F7B32B] transition-all duration-300" :style="{ width: (checklistMe.filter(i=>i.done).length / checklistMe.length * 100) + '%' }"></div>
                     </div>
                     <ul id="checklist-me-ul" class="space-y-3 sm:space-y-4 flex-1">
-                        <li v-for="(item, idx) in checklistMe" :key="'item_me_' + idx" class="flex items-center gap-3 group bg-transparent">
+                        <li v-for="(item, idx) in checklistMe" :key="'item_me_' + item.text.replace(/\s+/g, '_')" class="flex items-center gap-3 group bg-transparent">
                             <div class="cursor-grab active:cursor-grabbing drag-handle text-[#D1C8B8] hover:text-[#F7B32B] flex-shrink-0 pl-1">
                                 <i class="fas fa-bars"></i>
                             </div>
@@ -483,7 +488,7 @@ body::before {
                         <div class="h-full bg-[#A8201A] transition-all duration-300" :style="{ width: (checklistChanb.filter(i=>i.done).length / checklistChanb.length * 100) + '%' }"></div>
                     </div>
                     <ul id="checklist-chanb-ul" class="space-y-3 sm:space-y-4 flex-1">
-                        <li v-for="(item, idx) in checklistChanb" :key="'item_chanb_' + idx" class="flex items-center gap-3 group bg-transparent">
+                        <li v-for="(item, idx) in checklistChanb" :key="'item_chanb_' + item.text.replace(/\s+/g, '_')" class="flex items-center gap-3 group bg-transparent">
                             <div class="cursor-grab active:cursor-grabbing drag-handle text-[#D1C8B8] hover:text-[#A8201A] flex-shrink-0 pl-1">
                                 <i class="fas fa-bars"></i>
                             </div>
@@ -838,16 +843,15 @@ methods: {
         return colorMap[category] || '#A9B1BD';
     },
 
-    /* 🌟 智能防干擾尋找機制 (Wait For DOM) 🌟 */
+    /* 🌟 智能防干擾尋找機制 (Smart DOM Waiter) 🌟 */
     waitForElement(id, expectedTab, callback) {
         let attempts = 0;
         const check = () => {
-            // 如果用戶喺等待期間已經切換走咗，就即刻停止，避免綁定錯位
             if (this.currentTab !== expectedTab) return; 
             const el = document.getElementById(id);
             if (el) {
                 callback(el);
-            } else if (attempts < 50) { // 最多等 1 秒
+            } else if (attempts < 50) { 
                 attempts++;
                 setTimeout(check, 20);
             }
@@ -889,7 +893,7 @@ methods: {
         }
     },
 
-    /* 🌟 行程活動 SortableJS 完美修復 🌟 */
+    /* 🌟 行程活動 SortableJS 完美綁定 (Smart DOM Waiter) 🌟 */
     safeInitItinerarySortable() {
         this.waitForElement('itinerary-tbody', 'itinerary', (tbody) => {
             if (this.sortableInstItinerary) { this.sortableInstItinerary.destroy(); }
@@ -911,12 +915,15 @@ methods: {
         });
     },
 
-    /* 🌟 行李清單 SortableJS 完美修復 🌟 */
+    /* 🌟 行李清單 SortableJS 完美綁定 (Smart DOM Waiter) 🌟 */
     safeInitChecklistSortables() {
         this.waitForElement('checklist-me-ul', 'departure', (ulMe) => {
             if (this.sortableInstMe) { this.sortableInstMe.destroy(); }
             this.sortableInstMe = Sortable.create(ulMe, {
-                handle: '.drag-handle', animation: 150, ghostClass: "sortable-ghost", dragClass: "sortable-drag",
+                handle: '.drag-handle', 
+                animation: 150, 
+                ghostClass: "sortable-ghost", 
+                dragClass: "sortable-drag",
                 onEnd: (evt) => {
                     const itemEl = evt.item;
                     evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
@@ -930,7 +937,10 @@ methods: {
         this.waitForElement('checklist-chanb-ul', 'departure', (ulChanb) => {
             if (this.sortableInstChanb) { this.sortableInstChanb.destroy(); }
             this.sortableInstChanb = Sortable.create(ulChanb, {
-                handle: '.drag-handle', animation: 150, ghostClass: "sortable-ghost", dragClass: "sortable-drag",
+                handle: '.drag-handle', 
+                animation: 150, 
+                ghostClass: "sortable-ghost", 
+                dragClass: "sortable-drag",
                 onEnd: (evt) => {
                     const itemEl = evt.item;
                     evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
@@ -1040,7 +1050,7 @@ methods: {
         });
     },
 
-    /* 🌟 圖表智能輪詢渲染 (完美修復切換 Tab 失效) 🌟 */
+    /* 🌟 圖表智能輪詢渲染 (Smart DOM Waiter) 🌟 */
     safeRenderCharts() {
         this.waitForElement('expenseChart', 'accounting', (ctxPie) => {
             this.waitForElement('expenseLineChart', 'accounting', (ctxLine) => {
