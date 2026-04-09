@@ -73,9 +73,9 @@ body::before {
 @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
 .animate-slide-up { animation: slideUpFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-/* 🌟 修復拖曳狀態樣式，重奪最佳手感 🌟 */
-.sortable-ghost { opacity: 0.4; background-color: #FFF2D1 !important; }
-.sortable-drag { cursor: grabbing !important; box-shadow: 0 10px 20px rgba(0,0,0,0.1); background-color: #ffffff; }
+/* 🌟 100% 完美還原舊版本拖曳樣式 🌟 */
+.sortable-ghost { opacity: 0.3; background: #F7B32B !important; }
+.sortable-drag { background: white !important; box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important; cursor: grabbing !important; }
 </style>
 </head>
 <body class="min-h-screen pb-8 text-[#3A302A]">
@@ -187,8 +187,8 @@ body::before {
                                 <th class="text-center py-3 font-black w-24">導航/操作</th>
                             </tr>
                         </thead>
-                        <tbody ref="itineraryTbody" class="divide-y divide-[#F5E6CC]">
-                            <tr v-for="(act, i) in selectedDay.activities" :key="'act_' + act.activity + '_' + act.time" class="hover:bg-[#FFF9E6]/50 transition-colors bg-white group">
+                        <tbody id="itinerary-tbody" class="divide-y divide-[#F5E6CC]">
+                            <tr v-for="(act, i) in selectedDay.activities" :key="act.id || (act.time + act.activity + i)" :data-index="i" class="hover:bg-[#FFF9E6]/50 transition-colors bg-white group">
                                 <td class="py-4 text-center cursor-grab active:cursor-grabbing drag-handle text-[#D1C8B8] hover:text-[#F7B32B]">
                                     <i class="fas fa-bars text-lg"></i>
                                 </td>
@@ -273,7 +273,7 @@ body::before {
                     <i class="fas fa-chart-pie text-[#F7B32B]"></i> 支出分佈
                 </h3>
                 <div class="relative flex-1 w-full flex items-center justify-center">
-                    <canvas ref="expenseChart"></canvas>
+                    <canvas id="expenseChart"></canvas>
                     <div v-if="expenses.length === 0" class="absolute inset-0 flex flex-col items-center justify-center text-[#D1C8B8] bg-white/90 rounded-3xl z-10">
                         <i class="fas fa-chart-pie text-5xl sm:text-6xl mb-3 opacity-50"></i>
                         <p class="text-xs sm:text-sm font-bold text-center">暫無數據<br>快啲新增支出啦</p>
@@ -285,7 +285,7 @@ body::before {
                     <i class="fas fa-chart-line text-[#F7B32B]"></i> 支出走勢
                 </h3>
                 <div class="relative flex-1 w-full flex items-center justify-center">
-                    <canvas ref="expenseLineChart"></canvas>
+                    <canvas id="expenseLineChart"></canvas>
                     <div v-if="expenses.length === 0" class="absolute inset-0 flex flex-col items-center justify-center text-[#D1C8B8] bg-white/90 rounded-3xl z-10">
                         <i class="fas fa-chart-line text-5xl sm:text-6xl mb-3 opacity-50"></i>
                         <p class="text-xs sm:text-sm font-bold text-center">暫無數據<br>趨勢圖會喺度顯示</p>
@@ -447,8 +447,8 @@ body::before {
                     <div class="h-1.5 w-full bg-[#F5E6CC] rounded-full mb-4 sm:mb-5 overflow-hidden shadow-inner">
                         <div class="h-full bg-[#F7B32B] transition-all duration-300" :style="{ width: (checklistMe.filter(i=>i.done).length / checklistMe.length * 100) + '%' }"></div>
                     </div>
-                    <ul ref="checklistMeUl" class="space-y-3 sm:space-y-4 flex-1">
-                        <li v-for="(item, idx) in checklistMe" :key="'item_' + item.text" class="flex items-center gap-3 group bg-transparent">
+                    <ul id="checklist-me-ul" class="space-y-3 sm:space-y-4 flex-1">
+                        <li v-for="(item, idx) in checklistMe" :key="'item_me_' + item.text.replace(/\s+/g, '_')" class="flex items-center gap-3 group bg-transparent">
                             <div class="cursor-grab active:cursor-grabbing drag-handle text-[#D1C8B8] hover:text-[#F7B32B] flex-shrink-0 pl-1">
                                 <i class="fas fa-bars"></i>
                             </div>
@@ -477,8 +477,8 @@ body::before {
                     <div class="h-1.5 w-full bg-[#F5E6CC] rounded-full mb-4 sm:mb-5 overflow-hidden shadow-inner">
                         <div class="h-full bg-[#A8201A] transition-all duration-300" :style="{ width: (checklistChanb.filter(i=>i.done).length / checklistChanb.length * 100) + '%' }"></div>
                     </div>
-                    <ul ref="checklistChanbUl" class="space-y-3 sm:space-y-4 flex-1">
-                        <li v-for="(item, idx) in checklistChanb" :key="'item_' + item.text" class="flex items-center gap-3 group bg-transparent">
+                    <ul id="checklist-chanb-ul" class="space-y-3 sm:space-y-4 flex-1">
+                        <li v-for="(item, idx) in checklistChanb" :key="'item_chanb_' + item.text.replace(/\s+/g, '_')" class="flex items-center gap-3 group bg-transparent">
                             <div class="cursor-grab active:cursor-grabbing drag-handle text-[#D1C8B8] hover:text-[#A8201A] flex-shrink-0 pl-1">
                                 <i class="fas fa-bars"></i>
                             </div>
@@ -776,6 +776,7 @@ data() {
         sortableInstItinerary: null,
         sortableInstMe: null,
         sortableInstChanb: null,
+        activePollers: [],
 
         days: [
             { date: "2026-05-10", dayNumber: "10", dateStr: "5月10日", displayDate: "5月10日 (日)", title: "抵達 + 租車 + 真心市集", flight: { departure: "07:50", arrival: "09:45", from: "HKG", to: "CNX", number: "UO738" }, activities: [ { time: "09:45", activity: "清邁機場", ride: "Grab 20分鐘", note: "入境攞袋" }, { time: "11:30", activity: "Tawan Bike 租 ADV 160", ride: "10分鐘", note: "雙頭盔+鎖" }, { time: "13:00", activity: "Jing Jai Market", ride: "園內", note: "手作+咖啡" }, { time: "18:00", activity: "Tha Phae Gate Sunday Walking Street", ride: "步行", note: "限定夜市！" } ] },
@@ -807,15 +808,28 @@ computed: {
 },
 watch: {
     currentTab(newTab) {
-        setTimeout(() => {
-            if (newTab === 'accounting') this.safeRenderCharts();
-            if (newTab === 'itinerary') this.safeInitItinerarySortable();
-            if (newTab === 'departure') this.safeInitChecklistSortables();
-            if (newTab === 'rates' && this.historicalRates.length === 0) this.fetchHistoricalRates();
-        }, 150); // 確保在極速動畫 (80ms) 完結後精準綁定
+        this.clearPollers();
+        if (newTab === 'accounting') {
+            this.waitForElements(['expenseChart', 'expenseLineChart'], 'accounting', ([pie, line]) => {
+                this.executeRenderCharts(pie, line);
+            });
+        } else if (newTab === 'itinerary') {
+            this.waitForElements(['itinerary-tbody'], 'itinerary', ([tbody]) => {
+                this.initItinerarySortable(tbody);
+            });
+        } else if (newTab === 'departure') {
+            this.waitForElements(['checklist-me-ul', 'checklist-chanb-ul'], 'departure', ([ulMe, ulChanb]) => {
+                this.initChecklistSortables(ulMe, ulChanb);
+            });
+        } else if (newTab === 'rates' && this.historicalRates.length === 0) {
+            this.fetchHistoricalRates();
+        }
     },
     selectedDayIndex(newIdx) {
-        setTimeout(() => { this.safeInitItinerarySortable(); }, 150);
+        this.clearPollers();
+        this.waitForElements(['itinerary-tbody'], 'itinerary', ([tbody]) => {
+            this.initItinerarySortable(tbody);
+        });
         this.fetchDestinationWeather(newIdx);
     }
 },
@@ -830,7 +844,32 @@ methods: {
         return colorMap[category] || '#A9B1BD';
     },
 
-    /* 🌟 天氣預報連動 API (獲取當地真實實時天氣) 🌟 */
+    /* 🌟 終極防干擾尋找機制 (Wait For Elements) 🌟 */
+    clearPollers() {
+        this.activePollers.forEach(clearInterval);
+        this.activePollers = [];
+    },
+    waitForElements(elementIds, expectedTab, callback) {
+        let attempts = 0;
+        const poller = setInterval(() => {
+            // 用戶切換了 Tab，立即終止綁定，防止污染 DOM
+            if (this.currentTab !== expectedTab) {
+                clearInterval(poller);
+                return;
+            }
+            const elements = elementIds.map(id => document.getElementById(id));
+            if (elements.every(el => el !== null)) {
+                clearInterval(poller);
+                callback(elements);
+            } else if (attempts >= 50) { // 最多等 1 秒
+                clearInterval(poller);
+            }
+            attempts++;
+        }, 20);
+        this.activePollers.push(poller);
+    },
+
+    /* 🌟 天氣預報連動 API 🌟 */
     async fetchDestinationWeather(dayIndex) {
         this.realTimeWeather = { temp: '...', desc: '獲取真實數據...', icon: 'fa-spinner fa-spin', rain: '--%' };
         const isChiangMai = dayIndex < 9;
@@ -864,60 +903,68 @@ methods: {
         }
     },
 
-    /* 🌟 行程活動 SortableJS 完美綁定 ($refs) 🌟 */
-    safeInitItinerarySortable() {
-        const tbody = this.$refs.itineraryTbody;
-        if (tbody) {
-            if (this.sortableInstItinerary) { this.sortableInstItinerary.destroy(); }
-            this.sortableInstItinerary = Sortable.create(tbody, {
-                handle: '.drag-handle',
-                animation: 200,
-                easing: "cubic-bezier(0.25, 1, 0.5, 1)",
-                ghostClass: "sortable-ghost",
-                dragClass: "sortable-drag",
-                onEnd: (evt) => {
-                    const itemEl = evt.item;
-                    evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
-                    const arr = this.days[this.selectedDayIndex].activities;
-                    const item = arr.splice(evt.oldIndex, 1)[0];
-                    arr.splice(evt.newIndex, 0, item);
-                    db.ref('itinerary_days').set(this.days);
-                }
-            });
-        }
+    /* 🌟 行程活動 SortableJS 完全復原歷史版本參數 🌟 */
+    initItinerarySortable(tbody) {
+        if (this.sortableInstItinerary) { this.sortableInstItinerary.destroy(); }
+        this.sortableInstItinerary = Sortable.create(tbody, {
+            animation: 250,
+            handle: '.drag-handle',
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            delay: 150,
+            delayOnTouchOnly: true,
+            forceFallback: true,
+            onEnd: (evt) => {
+                if (evt.oldIndex === evt.newIndex) return;
+                const itemEl = evt.item;
+                evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
+                const arr = this.days[this.selectedDayIndex].activities;
+                const item = arr.splice(evt.oldIndex, 1)[0];
+                arr.splice(evt.newIndex, 0, item);
+                db.ref('itinerary_days').set(this.days);
+            }
+        });
     },
 
-    /* 🌟 行李清單 SortableJS 完美綁定 ($refs) 🌟 */
-    safeInitChecklistSortables() {
-        const ulMe = this.$refs.checklistMeUl;
-        if (ulMe) {
-            if (this.sortableInstMe) { this.sortableInstMe.destroy(); }
-            this.sortableInstMe = Sortable.create(ulMe, {
-                handle: '.drag-handle', animation: 200, ghostClass: "sortable-ghost", dragClass: "sortable-drag",
-                onEnd: (evt) => {
-                    const itemEl = evt.item;
-                    evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
-                    const item = this.checklistMe.splice(evt.oldIndex, 1)[0];
-                    this.checklistMe.splice(evt.newIndex, 0, item);
-                    db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
-                }
-            });
-        }
-        
-        const ulChanb = this.$refs.checklistChanbUl;
-        if (ulChanb) {
-            if (this.sortableInstChanb) { this.sortableInstChanb.destroy(); }
-            this.sortableInstChanb = Sortable.create(ulChanb, {
-                handle: '.drag-handle', animation: 200, ghostClass: "sortable-ghost", dragClass: "sortable-drag",
-                onEnd: (evt) => {
-                    const itemEl = evt.item;
-                    evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
-                    const item = this.checklistChanb.splice(evt.oldIndex, 1)[0];
-                    this.checklistChanb.splice(evt.newIndex, 0, item);
-                    db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
-                }
-            });
-        }
+    /* 🌟 行李清單 SortableJS 完全復原歷史版本參數 🌟 */
+    initChecklistSortables(ulMe, ulChanb) {
+        if (this.sortableInstMe) { this.sortableInstMe.destroy(); }
+        this.sortableInstMe = Sortable.create(ulMe, {
+            animation: 250,
+            handle: '.drag-handle',
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            delay: 150,
+            delayOnTouchOnly: true,
+            forceFallback: true,
+            onEnd: (evt) => {
+                if (evt.oldIndex === evt.newIndex) return;
+                const itemEl = evt.item;
+                evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
+                const item = this.checklistMe.splice(evt.oldIndex, 1)[0];
+                this.checklistMe.splice(evt.newIndex, 0, item);
+                db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
+            }
+        });
+
+        if (this.sortableInstChanb) { this.sortableInstChanb.destroy(); }
+        this.sortableInstChanb = Sortable.create(ulChanb, {
+            animation: 250,
+            handle: '.drag-handle',
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            delay: 150,
+            delayOnTouchOnly: true,
+            forceFallback: true,
+            onEnd: (evt) => {
+                if (evt.oldIndex === evt.newIndex) return;
+                const itemEl = evt.item;
+                evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex < evt.newIndex ? evt.oldIndex : evt.oldIndex + 1]);
+                const item = this.checklistChanb.splice(evt.oldIndex, 1)[0];
+                this.checklistChanb.splice(evt.newIndex, 0, item);
+                db.ref('checklist').set({ me: this.checklistMe, chanb: this.checklistChanb });
+            }
+        });
     },
 
     openActionSheet(dayIdx, actIdx) {
@@ -1013,19 +1060,15 @@ methods: {
             snapshot.forEach(child => { loaded.unshift(child.val()); });
             this.expenses = loaded;
             if(this.currentTab === 'accounting'){
-                setTimeout(() => { this.safeRenderCharts(); }, 150);
+                this.clearPollers();
+                this.waitForElements(['expenseChart', 'expenseLineChart'], 'accounting', ([pie, line]) => {
+                    this.executeRenderCharts(pie, line);
+                });
             }
         });
     },
 
-    /* 🌟 圖表渲染 ($refs) 🌟 */
-    safeRenderCharts() {
-        const ctxPie = this.$refs.expenseChart;
-        const ctxLine = this.$refs.expenseLineChart;
-        if (ctxPie && ctxLine) {
-            this.executeRenderCharts(ctxPie, ctxLine);
-        }
-    },
+    /* 🌟 圖表渲染核心 🌟 */
     executeRenderCharts(ctxPie, ctxLine) {
         if (this.expenseChartInst) this.expenseChartInst.destroy();
         if (this.expenseLineChartInst) this.expenseLineChartInst.destroy();
@@ -1130,13 +1173,23 @@ methods: {
             this.customRate = parseFloat(this.tempRate);
             db.ref('settings/customRate').set(this.customRate);
         }
-        if(this.currentTab === 'accounting') { setTimeout(() => { this.safeRenderCharts(); }, 150); }
+        if(this.currentTab === 'accounting') { 
+            this.clearPollers();
+            this.waitForElements(['expenseChart', 'expenseLineChart'], 'accounting', ([pie, line]) => {
+                this.executeRenderCharts(pie, line);
+            });
+        }
     },
     clearCustomRate() {
         this.showRateModal = false; 
         this.customRate = null;
         db.ref('settings/customRate').set(null);
-        if(this.currentTab === 'accounting') { setTimeout(() => { this.safeRenderCharts(); }, 150); }
+        if(this.currentTab === 'accounting') { 
+            this.clearPollers();
+            this.waitForElements(['expenseChart', 'expenseLineChart'], 'accounting', ([pie, line]) => {
+                this.executeRenderCharts(pie, line);
+            });
+        }
     },
     saveBudget() {
         this.showBudgetModal = false;
@@ -1158,7 +1211,10 @@ mounted() {
     this.fetchDestinationWeather(this.selectedDayIndex);
     
     if(this.currentTab === 'itinerary') {
-        setTimeout(() => { this.safeInitItinerarySortable(); }, 150);
+        this.clearPollers();
+        this.waitForElements(['itinerary-tbody'], 'itinerary', ([tbody]) => {
+            this.initItinerarySortable(tbody);
+        });
     }
 
     db.ref('settings/customRate').on('value', snapshot => {
@@ -1180,7 +1236,10 @@ mounted() {
         if(snapshot.exists()) {
             this.days = snapshot.val();
             if(this.currentTab === 'itinerary') {
-                setTimeout(() => { this.safeInitItinerarySortable(); }, 150);
+                this.clearPollers();
+                this.waitForElements(['itinerary-tbody'], 'itinerary', ([tbody]) => {
+                    this.initItinerarySortable(tbody);
+                });
             }
         } else {
             db.ref('itinerary_days').set(this.days);
